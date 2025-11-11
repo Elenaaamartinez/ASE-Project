@@ -52,7 +52,6 @@ Once running, the API Gateway is available at `http://localhost:5000`.
 
 The system follows a **microservices architecture** with the following components:
 
-\`\`\`
 ┌─────────────────────────────────────────────────────────────┐
 │                     CLIENT (Browser/Postman)                │
 └────────────────────┬────────────────────────────────────────┘
@@ -81,7 +80,7 @@ The system follows a **microservices architecture** with the following component
                   │  Database    │
                   │ (Port 5432)  │
                   └──────────────┘
-\`\`\`
+
 
 ### Service Responsibilities
 
@@ -103,7 +102,6 @@ The system follows a **microservices architecture** with the following component
 
 ## Project Structure
 
-\`\`\`
 battle-card-game/
 ├── README.md                              # This file
 ├── docker-compose.yml                     # Docker Compose configuration
@@ -148,7 +146,6 @@ battle-card-game/
     ├── postman_card_service.json         # Unit tests - Card Service
     ├── postman_match_service.json        # Unit tests - Match Service
     └── postman_integration.json          # Integration tests via Gateway
-\`\`\`
 
 ---
 
