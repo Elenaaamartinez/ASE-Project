@@ -342,10 +342,5 @@ For issues or questions:
 ## Team
 
 - **Backend Architecture**: Team development
-- **Last Updated**: November 11, 2025
 
 ---
-
-## License
-
-This project is part of the Advanced Software Engineering Lab (University of Pisa).
