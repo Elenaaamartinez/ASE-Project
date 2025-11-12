@@ -18,8 +18,8 @@ A distributed, microservices-based backend for a PvP turn-based card game. Built
 
 ### Prerequisites
 
-- Docker Engine (>= 20.10)
-- Docker Compose (>= 2.0)
+- Docker Engine
+- Docker Compose
 - Git
 
 ### Installation & Execution
@@ -52,34 +52,7 @@ Once running, the API Gateway is available at `http://localhost:5000`.
 
 The system follows a **microservices architecture** with the following components:
 
-┌─────────────────────────────────────────────────────────────┐
-│                     CLIENT (Browser/Postman)                │
-└────────────────────┬────────────────────────────────────────┘
-                     │ HTTP/REST
-                     ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    API GATEWAY (Port 5000)                  │
-│        • Request routing • Authentication • Logging         │
-└──┬──────────────────┬──────────────────┬────────────────────┘
-   │                  │                  │
-   │                  │                  │
-   ▼                  ▼                  ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   PLAYER     │  │    CARD      │  │    MATCH     │
-│  SERVICE     │  │   SERVICE    │  │   SERVICE    │
-│ (Port 5001)  │  │ (Port 5002)  │  │ (Port 5003)  │
-└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
-       │                 │                 │
-       └─────────────────┼─────────────────┘
-                         │
-                    [Internal Network]
-                         │
-                         ▼
-                  ┌──────────────┐
-                  │  PostgreSQL  │
-                  │  Database    │
-                  │ (Port 5432)  │
-                  └──────────────┘
+
 
 
 ### Service Responsibilities
@@ -101,51 +74,6 @@ The system follows a **microservices architecture** with the following component
 ---
 
 ## Project Structure
-
-battle-card-game/
-├── README.md                              # This file
-├── docker-compose.yml                     # Docker Compose configuration
-│
-├── api-gateway/
-│   ├── Dockerfile
-│   ├── requirements.txt
-│   ├── app.py                            # Flask app entry point
-│   ├── routes.py                         # API routes
-│   └── config.py                         # Configuration
-│
-├── services/
-│   ├── player-service/
-│   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── app.py
-│   │   ├── models.py                     # Database models
-│   │   └── routes.py
-│   │
-│   ├── card-service/
-│   │   ├── Dockerfile
-│   │   ├── requirements.txt
-│   │   ├── app.py
-│   │   ├── models.py
-│   │   └── routes.py
-│   │
-│   └── match-service/
-│       ├── Dockerfile
-│       ├── requirements.txt
-│       ├── app.py
-│       ├── models.py
-│       └── routes.py
-│
-├── docs/
-│   ├── ARCHITECTURE.md                   # Detailed architecture documentation
-│   ├── API.yaml                          # OpenAPI 3.0 specification
-│   ├── PROJECT_OVERVIEW.md               # Project overview and user stories
-│   └── SETUP_GUIDE.md                    # Detailed setup instructions
-│
-└── tests/
-    ├── postman_player_service.json       # Unit tests - Player Service
-    ├── postman_card_service.json         # Unit tests - Card Service
-    ├── postman_match_service.json        # Unit tests - Match Service
-    └── postman_integration.json          # Integration tests via Gateway
 
 ---
 
