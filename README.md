@@ -1,138 +1,125 @@
-# Battle Card Game Backend
+# La Escoba - Card Game Backend
 
-Microservices-based backend for a turn-based PvP card battle game.
+## Project Lab - Advanced Software Engineering 2025/26
 
-## Project Overview
+**Building a microservices architecture for the Spanish card game "La Escoba"**
 
-This project implements a complete backend system for managing a card battle game where players can:
-- Register and authenticate
-- View available cards
-- Join matches against other players
-- Play turn-based card battles
-- View match history and statistics
+---
+
+## Team Members
+
+- [Elena Martínez Vazquez] - [e.martinezvazquez@studenti.unipi.it]
+- [Student Name 2] - [email@unipi.it]
+- [Student Name 3] - [email@unipi.it]
+- [Student Name 4] - [email@unipi.it]
+
+---
+
+## What We're Building
+
+We're creating a microservices-based backend that lets people play the Spanish card game "La Escoba" online. It uses the 40-card Spanish deck and works pretty much like the Italian card game "Scopa" if you're familiar with that.
+
+### Main Features
+
+- **Microservices architecture**: 5 independent services + API Gateway
+- **Authentication**: OAuth2 with JWT tokens (for the final version)
+- **Matchmaking**: Automatic queue to pair up players
+- **Real-time gameplay**: 1v1 matches with full La Escoba game logic
+- **Permanent history**: Stores all matches and moves
+- **Player stats**: Rankings, scores, win rates
+
+---
 
 ## Architecture
 
-The system follows a microservices architecture with the following components:
+```ascii
+┌─────────────┐
+│   Player    │
+└──────┬──────┘
+       │ HTTPS/REST
+       ▼
+┌─────────────────────┐
+│   API Gateway       │
+└──────┬──────────────┘
+       │
+       ├──────────────┬──────────────┬──────────────┬──────────────┐
+       │              │              │              │              │
+       ▼              ▼              ▼              ▼              ▼
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
+│  Auth    │   │ Player   │   │  Card    │   │  Match   │   │ History  │
+│ Service  │   │ Service  │   │ Service  │   │ Service  │   │ Service  │
+└────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘
+     │              │              │              │              │
+     ▼              ▼              ▼              ▼              ▼
+┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
+│ Auth DB │   │Player DB│   │ Card DB │   │Match DB │   │History  │
+│  (PG)   │   │  (PG)   │   │  (PG)   │   │ (Redis) │   │DB (PG)  │
+└─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘
+```
 
-### Microservices
+### The Microservices
 
-I thikn the ones that we have to do it will be the API Gateway, Authentication service, player service, card service, match service, history service and the database manager for the game and for the authentication.
+1. **Auth Service**: Handles registration, login, and JWT token validation.
+2. **Player Service**: Manages profiles, stats, and rankings.
+3. **Card Service**: Info about all 40 Spanish cards.
+4. **Match Service**: Matchmaking, live matches, game logic.
+5. **History Service**: Keeps track of finished matches.
 
-### Databases
+---
 
+## Technologies
 
-## Requirements
+!!!!!!!!!!!We haven't decided exactly what we're using yet
+- **Backend**: 
+- **API Gateway**: 
+- **Bases de datos**: 
+- **Containerización**: Docker + Docker Compose
+- **Testing**: 
+- **Seguridad**:
 
-##  Quick Start
+---
 
-### Installation
+## Documentation
 
-1. Clone the repository:
-\`\`\`bash
-git clone <https://github.com/Elenaaamartinez/ASE-Project>
-cd battle-card-game
-\`\`\`
+All our project documentation is in the `/docs` folder:
 
-2. Build and start all services:
-\`\`\`bash
-docker compose up --build
-\`\`\`
-
-The API Gateway will be available at `http://localhost:5000`
-
-### Running Tests
-
-#### Unit Tests (Postman/Newman)
-\`\`\`bash
-
-# Test individual microservices in isolation
-
-# Integration tests via API Gateway
-\`\`\`
-
-#### Performance Tests (Locust)
-\`\`\
-
-# Open http://localhost:8089
-\`\`\`
-
-## API Documentation
-
-Full OpenAPI specifications are available in `/docs/openapi/`:
+- **arquitectura.md**: Detailed architecture description.
+- **structurizr.dsl**: Architecture diagram in Structurizr format.
+- **SystemContextView.dsl**: High-level system context diagram screenshot.
+- **ContainerView.dsl**: Lower-level container diagram showing each part of the project.
 
 
-### Core Endpoints
+### Checking out the Structurizr Diagram
 
-This ones were the basic that i have thought of
+If you want to see the architecture diagram in more detail, we used [https://structurizr.com](https://structurizr.com) to develop this architecture.
 
-#### Authentication
-- `POST /auth/register` - Register new player
-- `POST /auth/login` - Login an old user
+1. Go to https://structurizr.com/dsl .
+2. Copy the content from `docs/structurizr/workspace.dsl` .
+3. Paste it into the online editor.
+4. Check out the context and container diagrams
 
-#### Cards
-- `GET /cards` - List all available cards
-- `GET /cards/{id}` - Get specific card details
+---
 
-#### History
-- `GET /history` - Get player's match history
-- `GET /history/{id}` - Get specific match details
+## How it works
 
-##  Game Rules
+### Spanish Deck (40 cards)
 
-### Card Structure
-Each card has:
-- **Name**: Card identifier
-- **Image**: Visual representation
-I dont kown yet whta our game will do
+4 suits: **Coins (Oros), Cups (Copas), Swords (Espadas), Clubs (Bastos)**  
+Values: 1-7, Jack (Sota) (10), Knight (Caballo) (11), King (Rey) (12)
 
-### Match Flow
-we have to agree in how the game will work
+### Card Values for Gameplay
 
-##  Security
+- Cards 1-7: worth their number
+- Jack (Sota): worth 8
+- Knight (Caballo): worth 9
+- King (Rey): worth 10
 
-we have to agree n the amount of securiity we want to have
+### Scoring
 
-##  Architecture Diagrams
+- **Escoba**: - **Escoba**: +1 point (capturing all cards on the table)
+- **7 of Coins**: +1 point
+- **7 of Cups**: +1 point
+- **Most cards captured**: +1 point
+- **Most coins captured**: +1 point
 
-Architecture diagrams created with Structurizr are available in `/docs/architecture/`:
-- System Context Diagram
-- Container Diagram
-- Dynamic Diagrams (Registration Flow, Match Flow)
-
-View at: https://structurizr.com/dsl
-
-##  Development
-
-### Project Structure
-\`\`\`
-battle-card-game/
-├── services/
-│   └── (Here it will go the diferrent services)
-├── tests/
-│   └── (Here it will go the diferrent tests)
-├── docs/
-│   ├── openapi/
-│   ├── architecture/
-│   └── guides/
-├── docker-compose.yml
-├── docker-compose.test.yml
-└── README.md
-\`\`\`
-
-### Adding a New Microservice
-
-1. Create service directory in `/services/`
-2. Implement Flask application with REST API
-3. Create Dockerfile
-4. Add service to `docker-compose.yml`
-5. Update API Gateway routing
-6. Create OpenAPI specification
-7. Write unit tests
-
-##  Team
-
-- [Elena Martínez Vázquez] - e.martinezvazquez@studenti.unipi.it
-- [Mario Perez Perez] - name.surname@studenti.unipi.it
-- [Team Member 3] - name.surname@studenti.unipi.it
-- [Team Member 4] - name.surname@studenti.unipi.it
+First player to reach 15 points wins (or whatever custom target we set).
