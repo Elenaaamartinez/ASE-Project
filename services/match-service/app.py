@@ -86,4 +86,5 @@ def get_match(match_id):
     return jsonify(game.get_game_state(player))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5003, debug=True)
+
