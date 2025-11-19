@@ -76,10 +76,13 @@ def create_match():
 @app.route('/matches/<match_id>', methods=['GET'])
 def get_match(match_id):
     game = matches_db.get(match_id)
+    
     if not game:
         return jsonify({"error": "Match not found"}), 404
     
+    # CORRETTO: per GET usa request.args, non request.get_json()
     player = request.args.get('player')
+    
     if not player:
         return jsonify({"error": "Player parameter required"}), 400
     
@@ -87,4 +90,5 @@ def get_match(match_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5003, debug=True)
+
 
