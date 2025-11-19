@@ -13,13 +13,20 @@ def auth_proxy(path):
     """Route requests to authentication service"""
     try:
         url = f"{AUTH_SERVICE_URL}/{path}"
-        response = requests.request(
-            method=request.method,
-            url=url,
-            headers=request.headers,
-            json=request.get_json(),
-            params=request.args
-        )
+        
+        # Prepare request data based on method
+        kwargs = {
+            'method': request.method,
+            'url': url,
+            'headers': {key: value for key, value in request.headers if key != 'Host'},
+            'params': request.args
+        }
+        
+        # Only include JSON data for POST requests
+        if request.method == 'POST' and request.is_json:
+            kwargs['json'] = request.get_json()
+            
+        response = requests.request(**kwargs)
         return response.json(), response.status_code
     except requests.exceptions.RequestException as e:
         return jsonify({"error": "Auth service unavailable"}), 503
@@ -32,7 +39,8 @@ def cards_proxy(path):
         response = requests.request(
             method=request.method,
             url=url,
-            headers=request.headers
+            headers={key: value for key, value in request.headers if key != 'Host'},
+            params=request.args
         )
         return response.json(), response.status_code
     except requests.exceptions.RequestException as e:
@@ -43,13 +51,20 @@ def matches_proxy(path):
     """Route requests to matches service"""
     try:
         url = f"{MATCHES_SERVICE_URL}/{path}"
-        response = requests.request(
-            method=request.method,
-            url=url,
-            headers=request.headers,
-            json=request.get_json(),
-            params=request.args
-        )
+        
+        # Prepare request data based on method
+        kwargs = {
+            'method': request.method,
+            'url': url,
+            'headers': {key: value for key, value in request.headers if key != 'Host'},
+            'params': request.args
+        }
+        
+        # Only include JSON data for POST requests
+        if request.method == 'POST' and request.is_json:
+            kwargs['json'] = request.get_json()
+            
+        response = requests.request(**kwargs)
         return response.json(), response.status_code
     except requests.exceptions.RequestException as e:
         return jsonify({"error": "Matches service unavailable"}), 503
