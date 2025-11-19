@@ -136,5 +136,6 @@ def play_card(match_id):
     })
 
 if __name__ == '__main__':
-    print("🚀 Matches service starting on port 5003...")
-    app.run(host='0.0.0.0', port=5003, debug=True)
+    print("🚀 Matches service starting on port 5000...")
+    app.run(host='0.0.0.0', port=5000, debug=True)
+
