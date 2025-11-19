@@ -1,83 +1,77 @@
-# services/auth/app.py
 from flask import Flask, request, jsonify
-import sqlite3
+from datetime import datetime, timedelta
 import jwt
-import datetime
-from functools import wraps
-import bcrypt
-import os
+import uuid
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'fallback-secret-key')
+app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 
-def init_db():
-    conn = sqlite3.connect('auth.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  username TEXT UNIQUE NOT NULL,
-                  password_hash TEXT NOT NULL,
-                  email TEXT UNIQUE NOT NULL,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
-    conn.commit()
-    conn.close()
-
-@app.route('/health', methods=['GET'])
-def health():
-    return jsonify({'status': 'Auth service healthy'})
+# In-memory storage for demo (will be replaced with database)
+users_db = {}
+sessions_db = {}
 
 @app.route('/register', methods=['POST'])
 def register():
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-        email = data.get('email')
-        
-        if not username or not password or not email:
-            return jsonify({'error': 'Missing required fields'}), 400
-        
-        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        conn = sqlite3.connect('auth.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO users (username, password_hash, email) VALUES (?, ?, ?)",
-                  (username, password_hash, email))
-        conn.commit()
-        conn.close()
-        
-        return jsonify({'message': 'User created successfully'}), 201
-        
-    except sqlite3.IntegrityError:
-        return jsonify({'error': 'Username or email already exists'}), 400
-    except Exception as e:
-        return jsonify({'error': 'Registration failed'}), 500
+    """Register a new user"""
+    data = request.get_json()
+    
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({"error": "Username and password required"}), 400
+    
+    username = data['username']
+    
+    if username in users_db:
+        return jsonify({"error": "Username already exists"}), 400
+    
+    # Store user (in production, hash the password!)
+    users_db[username] = {
+        'password': data['password'],  # In production: bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        'created_at': datetime.now().isoformat()
+    }
+    
+    return jsonify({
+        "message": "User registered successfully",
+        "username": username
+    }), 201
 
 @app.route('/login', methods=['POST'])
 def login():
-    try:
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-        
-        conn = sqlite3.connect('auth.db')
-        c = conn.cursor()
-        c.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
-        result = c.fetchone()
-        conn.close()
-        
-        if result and bcrypt.checkpw(password.encode('utf-8'), result[0]):
-            token = jwt.encode({
-                'username': username,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-            }, app.config['SECRET_KEY'])
-            return jsonify({'token': token})
-        else:
-            return jsonify({'error': 'Invalid credentials'}), 401
-            
-    except Exception as e:
-        return jsonify({'error': 'Login failed'}), 500
+    """Login user and return JWT token"""
+    data = request.get_json()
+    
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({"error": "Username and password required"}), 400
+    
+    username = data['username']
+    password = data['password']
+    
+    user = users_db.get(username)
+    if not user or user['password'] != password:  # In production: bcrypt.checkpw()
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+    # Generate JWT token
+    token = jwt.encode({
+        'username': username,
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }, app.config['SECRET_KEY'], algorithm='HS256')
+    
+    # Store session
+    session_id = str(uuid.uuid4())
+    sessions_db[session_id] = {
+        'username': username,
+        'created_at': datetime.now().isoformat()
+    }
+    
+    return jsonify({
+        "message": "Login successful",
+        "token": token,
+        "session_id": session_id
+    })
+
+@app.route('/health', methods=['GET'])
+def health():
+    """Health check endpoint"""
+    return jsonify({"status": "Auth service is running"})
 
 if __name__ == '__main__':
-    init_db()
     app.run(host='0.0.0.0', port=5001, debug=True)
