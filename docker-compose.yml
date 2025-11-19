@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "5000:5000"
+    depends_on:
+      - auth-service
+      - cards-service
+      - matches-service
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - CARDS_SERVICE_URL=http://cards-service:5002
+      - MATCHES_SERVICE_URL=http://matches-service:5003
+
+  auth-service:
+    build: ./services/auth
+    expose:
+      - "5001"
+    environment:
+      - FLASK_ENV=development
+
+  cards-service:
+    build: ./services/cards
+    expose:
+      - "5002"
+    environment:
+      - FLASK_ENV=development
+
+  matches-service:
+    build: ./services/matches
+    expose:
+      - "5003"
+    environment:
+      - FLASK_ENV=development
