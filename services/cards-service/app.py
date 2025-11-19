@@ -15,7 +15,6 @@ SPANISH_DECK = [
     {"id": 8, "name": "Sota de Oros", "suit": "Oros", "value": 10, "points": 8, "image": "sota_oros.png"},
     {"id": 9, "name": "Caballo de Oros", "suit": "Oros", "value": 11, "points": 9, "image": "caballo_oros.png"},
     {"id": 10, "name": "Rey de Oros", "suit": "Oros", "value": 12, "points": 10, "image": "rey_oros.png"},
-    
     # Copas (Cups) - IDs 11-20
     {"id": 11, "name": "1 de Copas", "suit": "Copas", "value": 1, "points": 1, "image": "1_copas.png"},
     {"id": 12, "name": "2 de Copas", "suit": "Copas", "value": 2, "points": 2, "image": "2_copas.png"},
@@ -27,7 +26,6 @@ SPANISH_DECK = [
     {"id": 18, "name": "Sota de Copas", "suit": "Copas", "value": 10, "points": 8, "image": "sota_copas.png"},
     {"id": 19, "name": "Caballo de Copas", "suit": "Copas", "value": 11, "points": 9, "image": "caballo_copas.png"},
     {"id": 20, "name": "Rey de Copas", "suit": "Copas", "value": 12, "points": 10, "image": "rey_copas.png"},
-    
     # Espadas (Swords) - IDs 21-30
     {"id": 21, "name": "1 de Espadas", "suit": "Espadas", "value": 1, "points": 1, "image": "1_espadas.png"},
     {"id": 22, "name": "2 de Espadas", "suit": "Espadas", "value": 2, "points": 2, "image": "2_espadas.png"},
@@ -39,7 +37,6 @@ SPANISH_DECK = [
     {"id": 28, "name": "Sota de Espadas", "suit": "Espadas", "value": 10, "points": 8, "image": "sota_espadas.png"},
     {"id": 29, "name": "Caballo de Espadas", "suit": "Espadas", "value": 11, "points": 9, "image": "caballo_espadas.png"},
     {"id": 30, "name": "Rey de Espadas", "suit": "Espadas", "value": 12, "points": 10, "image": "rey_espadas.png"},
-    
     # Bastos (Clubs) - IDs 31-40
     {"id": 31, "name": "1 de Bastos", "suit": "Bastos", "value": 1, "points": 1, "image": "1_bastos.png"},
     {"id": 32, "name": "2 de Bastos", "suit": "Bastos", "value": 2, "points": 2, "image": "2_bastos.png"},
@@ -65,7 +62,7 @@ def get_all_cards():
 def get_card(card_id):
     """Get specific card by ID"""
     card = next((c for c in SPANISH_DECK if c['id'] == card_id), None)
-    
+
     if card:
         return jsonify(card)
     else:
