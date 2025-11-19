@@ -15,22 +15,23 @@ services:
       - MATCHES_SERVICE_URL=http://matches-service:5003
 
   auth-service:
-    build: ./services/auth
+    build: ./services/auth-service
     expose:
       - "5001"
     environment:
       - FLASK_ENV=development
 
   cards-service:
-    build: ./services/cards
+    build: ./services/cards-service
     expose:
       - "5002"
     environment:
       - FLASK_ENV=development
 
   matches-service:
-    build: ./services/matches
+    build: ./services/matches-service
     expose:
       - "5003"
     environment:
       - FLASK_ENV=development
+
