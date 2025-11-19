@@ -14,21 +14,21 @@ sessions_db = {}
 def register():
     """Register a new user"""
     data = request.get_json()
-    
+
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password required"}), 400
-    
+
     username = data['username']
-    
+
     if username in users_db:
         return jsonify({"error": "Username already exists"}), 400
-    
+
     # Store user (in production, hash the password!)
     users_db[username] = {
-        'password': data['password'],  # In production: bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        'password': data['password'], # In production: bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         'created_at': datetime.now().isoformat()
     }
-    
+
     return jsonify({
         "message": "User registered successfully",
         "username": username
@@ -38,30 +38,30 @@ def register():
 def login():
     """Login user and return JWT token"""
     data = request.get_json()
-    
+
     if not data or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Username and password required"}), 400
-    
+
     username = data['username']
     password = data['password']
-    
+
     user = users_db.get(username)
-    if not user or user['password'] != password:  # In production: bcrypt.checkpw()
+    if not user or user['password'] != password: # In production: bcrypt.checkpw()
         return jsonify({"error": "Invalid credentials"}), 401
-    
+
     # Generate JWT token
     token = jwt.encode({
         'username': username,
         'exp': datetime.utcnow() + timedelta(hours=24)
     }, app.config['SECRET_KEY'], algorithm='HS256')
-    
+
     # Store session
     session_id = str(uuid.uuid4())
     sessions_db[session_id] = {
         'username': username,
         'created_at': datetime.now().isoformat()
     }
-    
+
     return jsonify({
         "message": "Login successful",
         "token": token,
