@@ -8,66 +8,55 @@ AUTH_SERVICE_URL = "http://auth-service:5001"
 CARDS_SERVICE_URL = "http://cards-service:5002"
 MATCHES_SERVICE_URL = "http://matches-service:5003"
 
-@app.route('/auth/<path:path>', methods=['GET', 'POST'])
-def auth_proxy(path):
-    """Route requests to authentication service"""
+def make_request(service_url, path, method):
+    """Helper function to make requests to services"""
     try:
-        url = f"{AUTH_SERVICE_URL}/{path}"
+        url = f"{service_url}/{path}"
         
-        # Prepare request data based on method
-        kwargs = {
-            'method': request.method,
+        # Prepare headers (remove Host to avoid conflicts)
+        headers = {key: value for key, value in request.headers if key.lower() != 'host'}
+        
+        # Prepare request arguments
+        request_args = {
+            'method': method,
             'url': url,
-            'headers': {key: value for key, value in request.headers if key != 'Host'},
+            'headers': headers,
             'params': request.args
         }
         
-        # Only include JSON data for POST requests
-        if request.method == 'POST' and request.is_json:
-            kwargs['json'] = request.get_json()
+        # Only add JSON data for POST/PUT requests that have JSON content
+        if method in ['POST', 'PUT'] and request.content_type == 'application/json':
+            try:
+                request_args['json'] = request.get_json()
+            except:
+                # If JSON parsing fails, continue without JSON data
+                pass
+        
+        response = requests.request(**request_args)
+        
+        # Return the response from the service
+        try:
+            return response.json(), response.status_code
+        except:
+            return response.text, response.status_code
             
-        response = requests.request(**kwargs)
-        return response.json(), response.status_code
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": "Auth service unavailable"}), 503
+        return jsonify({"error": f"Service unavailable: {str(e)}"}), 503
+
+@app.route('/auth/<path:path>', methods=['GET', 'POST'])
+def auth_proxy(path):
+    """Route requests to authentication service"""
+    return make_request(AUTH_SERVICE_URL, path, request.method)
 
 @app.route('/cards/<path:path>', methods=['GET'])
 def cards_proxy(path):
     """Route requests to cards service"""
-    try:
-        url = f"{CARDS_SERVICE_URL}/{path}"
-        response = requests.request(
-            method=request.method,
-            url=url,
-            headers={key: value for key, value in request.headers if key != 'Host'},
-            params=request.args
-        )
-        return response.json(), response.status_code
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": "Cards service unavailable"}), 503
+    return make_request(CARDS_SERVICE_URL, path, request.method)
 
 @app.route('/matches/<path:path>', methods=['GET', 'POST'])
 def matches_proxy(path):
     """Route requests to matches service"""
-    try:
-        url = f"{MATCHES_SERVICE_URL}/{path}"
-        
-        # Prepare request data based on method
-        kwargs = {
-            'method': request.method,
-            'url': url,
-            'headers': {key: value for key, value in request.headers if key != 'Host'},
-            'params': request.args
-        }
-        
-        # Only include JSON data for POST requests
-        if request.method == 'POST' and request.is_json:
-            kwargs['json'] = request.get_json()
-            
-        response = requests.request(**kwargs)
-        return response.json(), response.status_code
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": "Matches service unavailable"}), 503
+    return make_request(MATCHES_SERVICE_URL, path, request.method)
 
 @app.route('/health', methods=['GET'])
 def health():
