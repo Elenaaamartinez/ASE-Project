@@ -164,16 +164,20 @@ def get_match(match_id):
     
     return jsonify(game.get_game_state(player))
 
-@app.route('/matches/<match_id>/play', methods=['POST'])
-def play_card(match_id):
-    """Play a card in a match"""
-    data = request.get_json()
-    player = data.get('player')
-    card_id = data.get('card_id')
-    target_cards = data.get('target_cards', [])
+@app.route('/matches/<match_id>', methods=['GET'])
+def get_match(match_id):
+    """Get match state"""
+    game = matches_db.get(match_id)
     
-    if not player or not card_id:
-        return jsonify({"error": "Player and card_id required"}), 400
+    if not game:
+        return jsonify({"error": "Match not found"}), 404
+    
+    # Get player from query parameters (not JSON body)
+    player = request.args.get('player')
+    if not player:
+        return jsonify({"error": "Player parameter required"}), 400
+    
+    return jsonify(game.get_game_state(player))
     
     game = matches_db.get(match_id)
     if not game:
@@ -196,3 +200,4 @@ def health():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5003, debug=True)
+
