@@ -9,7 +9,7 @@
 ## Team Members
 
 - [Elena Martínez Vazquez] - [e.martinezvazquez@studenti.unipi.it]
-- [Student Name 2] - [email@unipi.it]
+- [Michele Sagone Francesco Pio] - [m.sagone1@studenti.unipi.it]
 - [Student Name 3] - [email@unipi.it]
 - [Student Name 4] - [email@unipi.it]
 
