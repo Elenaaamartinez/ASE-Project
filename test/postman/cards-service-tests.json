@@ -1,0 +1,69 @@
+{
+  "info": {
+    "name": "Cards Service Tests",
+    "description": "Unit tests for Cards Microservice",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://cards-service:5002/health",
+          "protocol": "http",
+          "host": ["cards-service"],
+          "port": "5002",
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get All Cards",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://cards-service:5002/cards",
+          "protocol": "http",
+          "host": ["cards-service"],
+          "port": "5002",
+          "path": ["cards"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Specific Card - Valid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://cards-service:5002/cards/1",
+          "protocol": "http",
+          "host": ["cards-service"],
+          "port": "5002",
+          "path": ["cards", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Specific Card - Invalid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://cards-service:5002/cards/999",
+          "protocol": "http",
+          "host": ["cards-service"],
+          "port": "5002",
+          "path": ["cards", "999"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
