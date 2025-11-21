@@ -1,0 +1,120 @@
+{
+  "info": {
+    "name": "Auth Service Tests",
+    "description": "Unit tests for Authentication Microservice",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://auth-service:5001/health",
+          "protocol": "http",
+          "host": ["auth-service"],
+          "port": "5001",
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Register User - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass123\",\n  \"email\": \"test@email.com\"\n}"
+        },
+        "url": {
+          "raw": "http://auth-service:5001/register",
+          "protocol": "http",
+          "host": ["auth-service"],
+          "port": "5001",
+          "path": ["register"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Register User - Invalid (Missing Fields)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\"\n}"
+        },
+        "url": {
+          "raw": "http://auth-service:5001/register",
+          "protocol": "http",
+          "host": ["auth-service"],
+          "port": "5001",
+          "path": ["register"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login User - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass123\"\n}"
+        },
+        "url": {
+          "raw": "http://auth-service:5001/login",
+          "protocol": "http",
+          "host": ["auth-service"],
+          "port": "5001",
+          "path": ["login"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Login User - Invalid Credentials",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"wrongpassword\"\n}"
+        },
+        "url": {
+          "raw": "http://auth-service:5001/login",
+          "protocol": "http",
+          "host": ["auth-service"],
+          "port": "5001",
+          "path": ["login"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
