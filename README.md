@@ -76,19 +76,32 @@ We're creating a microservices-based backend that lets people play the Spanish c
   - Redis (Match state)
 - **Containerización**: Docker + Docker Compose
 - **Testing**: Postman (unit tests), Locust (performance)
-- **Seguridad**:
+- **Seguridad**: JWT Auth
 
 ---
 
 ## Documentation
 
 All our project documentation is in the `/docs` folder:
+- `/architecture`: 
+       - **arquitectura.md**: Detailed architecture description.
+       - **structurizr.dsl**: Architecture diagram in Structurizr format.
+       - **SystemContextView.dsl**: High-level system context diagram screenshot.
+       - **ContainerView.dsl**: Lower-level container diagram showing each part of the project.
 
-- **arquitectura.md**: Detailed architecture description.
-- **structurizr.dsl**: Architecture diagram in Structurizr format.
-- **SystemContextView.dsl**: High-level system context diagram screenshot.
-- **ContainerView.dsl**: Lower-level container diagram showing each part of the project.
+- API specification : `/openapi/openapi.yaml`
 
+- API usage examples : `/guides/api-usage-examples.md`
+
+- Testing guide : `/guides/testing-guide.md`
+
+## Testing
+
+Import JSON files from `tests/postman` and run Locust test: 
+```bash
+locust -f tests/locust/locustfile.py
+```
+Then access UI at: `http://localhost:8089`
 
 ### Checking out the Structurizr Diagram
 

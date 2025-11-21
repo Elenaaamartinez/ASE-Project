@@ -139,77 +139,190 @@ Each card has two main properties:
 └─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘
 ```
 
-### Microservicios
+## 4. Microservices Architecture
 
-#### 1. API Gateway
-**Responsabilidad:**
-**Tecnología:**
-**Puerto:**
+### 4.1. API Gateway
+**Responsibility:**  
+Acts as the single entry point of the system. It forwards all client requests to the appropriate internal services and handles routing. Future improvements include HTTPS termination and rate-limiting.
 
-#### 2. Authentication Service
-**Responsabilidad:**
-**Base de datos:**
-**Endpoints:**
-
-#### 3. Player Service
-**Responsabilidad:** 
-**Base de datos:** 
-**Endpoints:**
-
-#### 4. Card Service
-**Responsabilidad:** 
-**Base de datos:** 
-**Endpoints:**
-
-#### 5. Match Service
-**Responsabilidad:** 
-**Base de datos:** 
-**Endpoints:**
-**Comunication with other services:**
-
-#### 6. History Service
-**Responsabilidad:** 
-**Base de datos:** 
-**Endpoints:**
-
-### Database
-
-#### Auth Database
-**Tablas:**
-- `users` (id, username, email, password_hash, salt, created_at, last_login)
-
-#### Player Database
-**Tablas:**
-- `players` (id, user_id, total_score, level, matches_played, wins, losses, win_rate)
-- `player_profiles` (player_id, profile_picture, bio, preferences)
-
-#### Card Database
-**Tablas:**
-- `cards` (id, suit, value, numeric_value, image_url, suit_order)
-
-#### Match Database
-**Estructura:** Key-value store
-- `match:{match_id}` → JSON con estado completo de la partida
-
-#### History Database
-**Tablas:**
-- `matches` (id, player1_id, player2_id, winner_id, start_time, end_time, total_moves)
-- `match_moves` (id, match_id, player_id, move_number, action, timestamp)
-- `match_scores` (match_id, player_id, points, cards_captured, oros_captured, escobas)
+**Technology:** Flask-based reverse proxy  
+**Port:** `5000` (exposed to users)
 
 ---
 
-## 5. Flujos de Usuario
+### 4.2. Authentication Service
+**Responsibility:**  
+Handles all account-related operations such as user registration, login, and JWT token issuance/validation.
 
-### Registro y Login
-### Ver Cartas
-### Jugar Partida
-### Ver Historial
+**Database:** PostgreSQL → `users` table  
+
+**Endpoints:**
+```bash
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/register` | Create a new user |
+| POST | `/auth/login` | Authenticate and return JWT |
+| GET | `/auth/health` | Service health check |
+```
+
+---
+
+### 4.3. Player Service
+**Responsibility:**  
+Manages player profiles, rankings, statistics, and gameplay achievements.
+
+**Database:** PostgreSQL → `players` and `player_profiles` tables  
+
+**Endpoints:**
+```bash
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/players/{username}` | Retrieve player profile |
+| PUT | `/players/{username}/stats` | Update stats after a match |
+| GET | `/players/health` | Service health check |
+```
+
+---
+
+### 4.4. Card Service
+**Responsibility:**  
+Provides full card deck data and card details for gameplay. Maintains the Spanish 40-card deck.
+
+**Database:** PostgreSQL or static JSON → `cards` table  
+
+**Endpoints:**
+```bash
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/cards/cards` | Returns all cards in the deck |
+| GET | `/cards/cards/{card_id}` | Return a specific card |
+| GET | `/cards/health` | Service health check |
+```
+
+---
+
+### 4.5. Match Service
+**Responsibility:**  
+Creates and manages active 1v1 matches and implements La Escoba game rules (hands, table state, scoring, escobas, special cards, etc.).
+
+**Database:** Redis (or in-memory for MVP)  
+**Key Structure:** `match:{match_id} → JSON state`
+
+**Endpoints:**
+```bash
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/matches/matches` | Create a new match |
+| GET | `/matches/matches/{match_id}?player={username}` | Retrieve match state |
+| POST | `/matches/matches/{match_id}/play` | Play a card |
+```
+
+**Communication with other services:**
+- Card Service → fetch deck information
+- Player Service → update final score and stats
+- History Service → store match results permanently
+
+---
+
+### 4.6. History Service
+**Responsibility:**  
+Stores completed match data and provides full player match history.
+
+**Database:** PostgreSQL → `matches`, `match_moves`, `match_scores` tables  
+
+**Endpoints:**
+```bash
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/history/{username}` | Retrieves player match history |
+| POST | `/history/matches` | Save new match result |
+| GET | `/history/health` | Service health check |
+```
+---
+
+## 5. Databases Overview
+```bash
+| Service | Database | Stored Data |
+|--------|----------|-------------|
+| Auth Service | PostgreSQL | User accounts |
+| Player Service | PostgreSQL | Player profile & statistics |
+| Card Service | PostgreSQL / JSON | Spanish card deck |
+| Match Service | Redis KV | Active match state |
+| History Service | PostgreSQL | Completed match history |
+```
+
+---
+
+### Table Definitions
+
+#### Auth Database
+```bash
+| Table | Description |
+|-------|-------------|
+| `users` | id, username, email, password_hash, salt, created_at, last_login |
+```
+
+#### Player Database
+```bash
+| Table | Description |
+|-------|-------------|
+| `players` | id, user_id, total_score, level, matches_played, wins, losses, win_rate |
+| `player_profiles` | player_id, profile_picture, bio, preferences |
+```
+
+#### Card Database
+```bash
+| Table | Description |
+|-------|-------------|
+| `cards` | id, suit, value, numeric_value, image_url, suit_order |
+```
+
+#### Match Database
+```bash
+| Key | Value |
+|-----|-------|
+| `match:{match_id}` | Full match state (table cards, hands, score, etc.) |
+```
+
+#### History Database
+```bash
+| Table | Description |
+|-------|-------------|
+| `matches` | id, player1_id, player2_id, winner_id, start_time, end_time |
+| `match_moves` | move-by-move log |
+| `match_scores` | scoring breakdown |
+```
+
+---
+
+## 6. User Flows
+
+### Registration & Login
+- 1. Player registers  
+- 2. Player logs in and receives JWT  
+- 3. Token required to access API endpoints
+
+### Browse Cards
+
+`GET /cards/cards` displays the full Spanish deck
+
+### Play Match
+
+- 1. Create match  
+- 2. Players request match state  
+- 3. Play cards turn-by-turn  
+- 4. When match ends → state sent to History Service  
+- 5. Player statistics updated
+
+### View Match History
+
+`GET /history/{username}` returns match results & stats
+
+---
+
 ## 7. Deployment
 
-El sistema completo se desplegará con Docker Compose:
+All microservices are launched together using Docker Compose:
 
-**Comando de inicio:**
-\`\`\`bash
-docker compose up
-\`\`\`
+```bash
+docker compose up --build
