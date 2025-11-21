@@ -60,19 +60,31 @@ check_service "Matches Service" "/matches/health"
 
 print_status "🔗 Running integration tests..." "$YELLOW"
 if [ -d "test/integration" ]; then
-    cd test/integration
-    if python test_api_gateway.py; then
+    # Copy test files to api-gateway container
+    print_status "📋 Copying test files to container..." "$YELLOW"
+    docker exec ase-project-api-gateway-1 mkdir -p /app/test/integration 2>/dev/null || true
+    docker cp test/integration/test_api_gateway.py ase-project-api-gateway-1:/app/test/integration/
+    docker cp test/integration/test_end_to_end.py ase-project-api-gateway-1:/app/test/integration/
+    
+    # Install requests in the container
+    print_status "📦 Installing dependencies..." "$YELLOW"
+    docker exec ase-project-api-gateway-1 pip install requests pytest 2>/dev/null || true
+    
+    # Run API Gateway tests inside container
+    print_status "🚀 Running API Gateway tests..." "$YELLOW"
+    if docker exec ase-project-api-gateway-1 python /app/test/integration/test_api_gateway.py; then
         print_status "✅ API Gateway tests passed" "$GREEN"
     else
         print_status "❌ API Gateway tests failed" "$RED"
     fi
     
-    if python test_end_to_end.py; then
+    # Run end-to-end tests inside container
+    print_status "🚀 Running end-to-end tests..." "$YELLOW"
+    if docker exec ase-project-api-gateway-1 python /app/test/integration/test_end_to_end.py; then
         print_status "✅ End-to-end tests passed" "$GREEN"
     else
         print_status "❌ End-to-end tests failed" "$RED"
     fi
-    cd ../..
 else
     print_status "ℹ️ Integration tests directory not found, skipping." "$YELLOW"
 fi
