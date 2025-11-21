@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "Player Service Tests",
+    "description": "Unit tests for Player Microservice",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://player-service:5004/health",
+          "protocol": "http",
+          "host": ["player-service"],
+          "port": "5004",
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Player Profile - Valid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://player-service:5004/players/player1",
+          "protocol": "http",
+          "host": ["player-service"],
+          "port": "5004",
+          "path": ["players", "player1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Player Profile - Invalid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://player-service:5004/players/invalid_player",
+          "protocol": "http",
+          "host": ["player-service"],
+          "port": "5004",
+          "path": ["players", "invalid_player"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
