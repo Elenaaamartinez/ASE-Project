@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🏥 Health Check for La Escoba Services"
+echo "Health Check for La Escoba Services"
 
 BASE_URL="http://localhost:5000"
 SERVICES=(
@@ -16,7 +16,7 @@ for service in "${SERVICES[@]}"; do
     response=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}${service}")
     
     if [ "$response" -eq 200 ]; then
-        echo "✅ $service: HEALTHY (HTTP $response)"
+        echo "$service: HEALTHY (HTTP $response)"
     else
         echo "❌ $service: UNHEALTHY (HTTP $response)"
         all_healthy=false
