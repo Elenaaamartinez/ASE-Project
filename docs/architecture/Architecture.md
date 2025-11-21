@@ -4,10 +4,10 @@
 
 **Project name:** La Escoba - Card Game Backend**Team members:**
 
-- [Elena Martínez Vázquez]
-- [Student Name 2]
-- [Student Name 3]
-- [Student Name 4]
+- [Elena Martínez Vazquez]
+- [Mario Perez Perez]
+- [Michele F. P. Sagone]
+- [Shahd Amer]
 
 ---
 

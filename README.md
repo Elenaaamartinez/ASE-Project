@@ -9,9 +9,9 @@
 ## Team Members
 
 - [Elena Martínez Vazquez] - [e.martinezvazquez@studenti.unipi.it]
-- [Michele Sagone Francesco Pio] - [m.sagone1@studenti.unipi.it]
-- [Student Name 3] - [email@unipi.it]
-- [Student Name 4] - [email@unipi.it]
+- [Mario Perez Perez] - [m.perezperez1@studenti.unipi.it]
+- [Michele F. P. Sagone] - [m.sagone1@studenti.unipi.it]
+- [Shahd Amer] - [s.amer@studenti.unipi.it]
 
 ---
 
@@ -69,12 +69,13 @@ We're creating a microservices-based backend that lets people play the Spanish c
 
 ## Technologies
 
-!!!!!!!!!!!We haven't decided exactly what we're using yet
-- **Backend**: 
-- **API Gateway**: 
+- **Backend**: Python with Flask
+- **API Gateway**: Kong or Nginx
 - **Bases de datos**: 
+  - PostgreSQL (Auth, Players, Cards, History)
+  - Redis (Match state)
 - **Containerización**: Docker + Docker Compose
-- **Testing**: 
+- **Testing**: Postman (unit tests), Locust (performance)
 - **Seguridad**:
 
 ---
