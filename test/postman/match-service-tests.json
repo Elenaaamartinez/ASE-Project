@@ -1,0 +1,129 @@
+{
+  "info": {
+    "name": "Match Service Tests",
+    "description": "Unit tests for Match Microservice",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://match-service:5003/health",
+          "protocol": "http",
+          "host": ["match-service"],
+          "port": "5003",
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Match - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"player1\": \"player1\",\n  \"player2\": \"player2\"\n}"
+        },
+        "url": {
+          "raw": "http://match-service:5003/matches",
+          "protocol": "http",
+          "host": ["match-service"],
+          "port": "5003",
+          "path": ["matches"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Match - Invalid",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"player1\": \"player1\"\n}"
+        },
+        "url": {
+          "raw": "http://match-service:5003/matches",
+          "protocol": "http",
+          "host": ["match-service"],
+          "port": "5003",
+          "path": ["matches"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Match State - Valid",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://match-service:5003/matches/MATCH_ID?player=player1",
+          "protocol": "http",
+          "host": ["match-service"],
+          "port": "5003",
+          "path": ["matches", "MATCH_ID"],
+          "query": [
+            {
+              "key": "player",
+              "value": "player1"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Match State - Invalid Match ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://match-service:5003/matches/invalid_match_id?player=player1",
+          "protocol": "http",
+          "host": ["match-service"],
+          "port": "5003",
+          "path": ["matches", "invalid_match_id"],
+          "query": [
+            {
+              "key": "player",
+              "value": "player1"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Match State - Missing Player",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://match-service:5003/matches/MATCH_ID",
+          "protocol": "http",
+          "host": ["match-service"],
+          "port": "5003",
+          "path": ["matches", "MATCH_ID"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
