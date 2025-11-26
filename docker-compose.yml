@@ -7,10 +7,14 @@ services:
       - auth-service
       - cards-service
       - matches-service
+      - player-service
+      - history-service
     environment:
       - AUTH_SERVICE_URL=http://auth-service:5001
       - CARDS_SERVICE_URL=http://cards-service:5002
       - MATCHES_SERVICE_URL=http://matches-service:5003
+      - PLAYER_SERVICE_URL=http://player-service:5004
+      - HISTORY_SERVICE_URL=http://history-service:5005
 
   auth-service:
     build: ./services/auth-service
@@ -30,5 +34,19 @@ services:
     build: ./services/match-service
     expose:
       - "5003"
+    environment:
+      - FLASK_ENV=development
+
+  player-service:
+    build: ./services/player-service
+    expose:
+      - "5004"
+    environment:
+      - FLASK_ENV=development
+
+  history-service:
+    build: ./services/history-service
+    expose:
+      - "5005"
     environment:
       - FLASK_ENV=development
