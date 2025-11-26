@@ -7,6 +7,8 @@ app = Flask(__name__)
 AUTH_SERVICE_URL = "http://auth-service:5001"
 CARDS_SERVICE_URL = "http://cards-service:5002"
 MATCHES_SERVICE_URL = "http://matches-service:5003"
+PLAYER_SERVICE_URL = "http://player-service:5004"
+HISTORY_SERVICE_URL = "http://history-service:5005"
 
 def make_request(service_url, path, method):
     """Helper function to make requests to services"""
@@ -57,6 +59,16 @@ def cards_proxy(path):
 def matches_proxy(path):
     """Route requests to matches service"""
     return make_request(MATCHES_SERVICE_URL, path, request.method)
+
+@app.route('/players/<path:path>', methods=['GET', 'PUT'])
+def players_proxy(path):
+    """Route requests to player service"""
+    return make_request(PLAYER_SERVICE_URL, path, request.method)
+
+@app.route('/history/<path:path>', methods=['GET', 'POST'])
+def history_proxy(path):
+    """Route requests to history service"""
+    return make_request(HISTORY_SERVICE_URL, path, request.method)
 
 @app.route('/health', methods=['GET'])
 def health():
