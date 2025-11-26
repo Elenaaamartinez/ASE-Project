@@ -1,0 +1,142 @@
+openapi: 3.0.0
+info:
+  title: La Escoba Card Game API
+  description: Microservices backend for the Spanish card game La Escoba
+  version: 1.0.0
+  contact:
+    name: Group 3 - ASE Project
+    email: e.martinezvaquez@studenti.unipi.it
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new player
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Bad request
+
+  /auth/login:
+    post:
+      summary: Login player
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /cards/cards:
+    get:
+      summary: Get all Spanish deck cards
+      responses:
+        '200':
+          description: List of all cards
+
+  /matches/matches:
+    post:
+      summary: Create a new match
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                player1:
+                  type: string
+                player2:
+                  type: string
+      responses:
+        '201':
+          description: Match created
+
+  /players/{username}:
+    get:
+      summary: Get player profile
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Player profile
+        '404':
+          description: Player not found
+
+  /history/{username}:
+    get:
+      summary: Get player match history
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Match history
+
+components:
+  schemas:
+    Player:
+      type: object
+      properties:
+        player_id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        total_score:
+          type: integer
+        matches_played:
+          type: integer
+        matches_won:
+          type: integer
+        win_rate:
+          type: number
+
+    Card:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        suit:
+          type: string
+        value:
+          type: integer
+        points:
+          type: integer
