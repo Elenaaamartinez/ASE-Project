@@ -9,12 +9,6 @@ services:
       - matches-service
       - player-service
       - history-service
-    environment:
-      - AUTH_SERVICE_URL=http://auth-service:5001
-      - CARDS_SERVICE_URL=http://cards-service:5002
-      - MATCHES_SERVICE_URL=http://matches-service:5003
-      - PLAYER_SERVICE_URL=http://player-service:5004
-      - HISTORY_SERVICE_URL=http://history-service:5005
 
   auth-service:
     build: ./services/auth-service
@@ -22,6 +16,9 @@ services:
       - "5001"
     environment:
       - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:password@auth-db:5432/auth_db
+    depends_on:
+      - auth-db
 
   cards-service:
     build: ./services/cards-service
@@ -29,6 +26,9 @@ services:
       - "5002"
     environment:
       - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:password@cards-db:5432/cards_db
+    depends_on:
+      - cards-db
 
   matches-service:
     build: ./services/match-service
@@ -36,6 +36,9 @@ services:
       - "5003"
     environment:
       - FLASK_ENV=development
+      - REDIS_URL=redis://match-db:6379
+    depends_on:
+      - match-db
 
   player-service:
     build: ./services/player-service
@@ -43,6 +46,9 @@ services:
       - "5004"
     environment:
       - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:password@player-db:5432/player_db
+    depends_on:
+      - player-db
 
   history-service:
     build: ./services/history-service
@@ -50,3 +56,55 @@ services:
       - "5005"
     environment:
       - FLASK_ENV=development
+      - DATABASE_URL=postgresql://user:password@history-db:5432/history_db
+    depends_on:
+      - history-db
+
+  # Databases
+  auth-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=auth_db
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+
+  cards-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=cards_db
+    volumes:
+      - cards_data:/var/lib/postgresql/data
+
+  player-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=player_db
+    volumes:
+      - player_data:/var/lib/postgresql/data
+
+  history-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=history_db
+    volumes:
+      - history_data:/var/lib/postgresql/data
+
+  match-db:
+    image: redis:6
+    volumes:
+      - match_data:/data
+
+volumes:
+  auth_data:
+  cards_data:
+  player_data:
+  history_data:
+  match_data:
