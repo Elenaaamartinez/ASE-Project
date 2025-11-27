@@ -23,16 +23,18 @@ def make_request(service_url, path, method):
             'method': method,
             'url': url,
             'headers': headers,
-            'params': request.args
+            'params': request.args,
+            'timeout': 10
         }
         
         # Only add JSON data for POST/PUT requests that have JSON content
-        if method in ['POST', 'PUT'] and request.content_type == 'application/json':
+        if method in ['POST', 'PUT'] and request.get_data():
             try:
                 request_args['json'] = request.get_json()
             except:
-                # If JSON parsing fails, continue without JSON data
-                pass
+                # If JSON parsing fails, send raw data
+                request_args['data'] = request.get_data()
+                request_args['headers']['Content-Type'] = request.content_type
         
         response = requests.request(**request_args)
         
@@ -45,35 +47,86 @@ def make_request(service_url, path, method):
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Service unavailable: {str(e)}"}), 503
 
-@app.route('/auth/<path:path>', methods=['GET', 'POST'])
-def auth_proxy(path):
-    """Route requests to authentication service"""
-    return make_request(AUTH_SERVICE_URL, path, request.method)
+# Auth routes
+@app.route('/auth/register', methods=['POST'])
+def auth_register():
+    return make_request(AUTH_SERVICE_URL, "register", "POST")
 
-@app.route('/cards/<path:path>', methods=['GET'])
-def cards_proxy(path):
-    """Route requests to cards service"""
-    return make_request(CARDS_SERVICE_URL, path, request.method)
+@app.route('/auth/login', methods=['POST'])
+def auth_login():
+    return make_request(AUTH_SERVICE_URL, "login", "POST")
 
-@app.route('/matches/<path:path>', methods=['GET', 'POST'])
-def matches_proxy(path):
-    """Route requests to matches service"""
-    return make_request(MATCHES_SERVICE_URL, path, request.method)
+@app.route('/auth/health', methods=['GET'])
+def auth_health():
+    return make_request(AUTH_SERVICE_URL, "health", "GET")
 
-@app.route('/players/<path:path>', methods=['GET', 'PUT'])
-def players_proxy(path):
-    """Route requests to player service"""
-    return make_request(PLAYER_SERVICE_URL, path, request.method)
+# Cards routes
+@app.route('/cards/cards', methods=['GET'])
+def cards_all():
+    return make_request(CARDS_SERVICE_URL, "cards", "GET")
 
-@app.route('/history/<path:path>', methods=['GET', 'POST'])
-def history_proxy(path):
-    """Route requests to history service"""
-    return make_request(HISTORY_SERVICE_URL, path, request.method)
+@app.route('/cards/cards/<int:card_id>', methods=['GET'])
+def cards_specific(card_id):
+    return make_request(CARDS_SERVICE_URL, f"cards/{card_id}", "GET")
 
+@app.route('/cards/health', methods=['GET'])
+def cards_health():
+    return make_request(CARDS_SERVICE_URL, "health", "GET")
+
+# Matches routes
+@app.route('/matches/matches', methods=['POST'])
+def matches_create():
+    return make_request(MATCHES_SERVICE_URL, "matches", "POST")
+
+@app.route('/matches/matches/<match_id>', methods=['GET'])
+def matches_get(match_id):
+    return make_request(MATCHES_SERVICE_URL, f"matches/{match_id}", "GET")
+
+@app.route('/matches/matches/<match_id>/play', methods=['POST'])
+def matches_play(match_id):
+    return make_request(MATCHES_SERVICE_URL, f"matches/{match_id}/play", "POST")
+
+@app.route('/matches/health', methods=['GET'])
+def matches_health():
+    return make_request(MATCHES_SERVICE_URL, "health", "GET")
+
+# Player routes
+@app.route('/players/<username>', methods=['GET'])
+def players_get(username):
+    return make_request(PLAYER_SERVICE_URL, f"players/{username}", "GET")
+
+@app.route('/players/<username>/stats', methods=['PUT'])
+def players_update_stats(username):
+    return make_request(PLAYER_SERVICE_URL, f"players/{username}/stats", "PUT")
+
+@app.route('/players/health', methods=['GET'])
+def players_health():
+    return make_request(PLAYER_SERVICE_URL, "health", "GET")
+
+# History routes
+@app.route('/history/<username>', methods=['GET'])
+def history_get(username):
+    return make_request(HISTORY_SERVICE_URL, f"history/{username}", "GET")
+
+@app.route('/history/matches', methods=['POST'])
+def history_save():
+    return make_request(HISTORY_SERVICE_URL, "history/matches", "POST")
+
+@app.route('/history/health', methods=['GET'])
+def history_health():
+    return make_request(HISTORY_SERVICE_URL, "health", "GET")
+
+# API Gateway health
 @app.route('/health', methods=['GET'])
 def health():
-    """Health check endpoint"""
-    return jsonify({"status": "API Gateway is running"})
+    return jsonify({"status": "API Gateway is running", "services": {
+        "auth": AUTH_SERVICE_URL,
+        "cards": CARDS_SERVICE_URL,
+        "matches": MATCHES_SERVICE_URL,
+        "players": PLAYER_SERVICE_URL,
+        "history": HISTORY_SERVICE_URL
+    }})
 
 if __name__ == '__main__':
+    print("🚀 API Gateway starting on port 5000...")
     app.run(host='0.0.0.0', port=5000, debug=True)
