@@ -74,58 +74,5 @@ def health():
     return jsonify({"status": "Auth service is running"})
 
 if __name__ == '__main__':
+    print("✅ Auth service starting on port 5001...")
     app.run(host='0.0.0.0', port=5001, debug=True)
-EOF
-
-# 3. Aggiorna requirements.txt (rimuovi psycopg2)
-echo "Flask==2.3.3
-PyJWT==2.8.0" > services/auth-service/requirements.txt
-
-# 4. Aggiorna docker-compose.yml per rimuovere database da auth-service
-cat > docker-compose.yml << 'EOF'
-services:
-  api-gateway:
-    build: ./services/api-gateway
-    ports:
-      - "5000:5000"
-    depends_on:
-      - auth-service
-      - cards-service
-      - matches-service
-      - player-service
-      - history-service
-
-  auth-service:
-    build: ./services/auth-service
-    expose:
-      - "5001"
-    environment:
-      - FLASK_ENV=development
-
-  cards-service:
-    build: ./services/cards-service
-    expose:
-      - "5002"
-    environment:
-      - FLASK_ENV=development
-
-  matches-service:
-    build: ./services/match-service
-    expose:
-      - "5003"
-    environment:
-      - FLASK_ENV=development
-
-  player-service:
-    build: ./services/player-service
-    expose:
-      - "5004"
-    environment:
-      - FLASK_ENV=development
-
-  history-service:
-    build: ./services/history-service
-    expose:
-      - "5005"
-    environment:
-      - FLASK_ENV=development
