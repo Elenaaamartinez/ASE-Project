@@ -131,15 +131,13 @@ Values: 1-7, Jack (Sota) (10), Knight (Caballo) (11), King (Rey) (12)
 ### Card capture mechanic
 The primary goal of the game is to capture cards from the table to score points.
 
-**Turn Action**: During a turn, a player plays one card from their hand.
+- **Turn Action**: During a turn, a player plays one card from their hand.
 
-**The Capture Rule (Sum to 15)**: The played card must, when added to one or more cards already face-up on the table, result in a sum of exactly 15.
+- **The Capture Rule (Sum to 15)**: The played card must, when added to one or more cards already face-up on the table, result in a sum of exactly 15. If a player can achieve a sum of 15, they take both their played card and the captured card(s) and set them aside to calculate the score later.
 
-If a player can achieve a sum of 15, they take both their played card and the captured card(s) and set them aside to calculate the score later.
+- **No Capture**: If the played card cannot be combined with any card or combination of cards on the table to sum to 15, the card remains on the table for the next player to potentially capture.
 
-**No Capture**: If the played card cannot be combined with any card or combination of cards on the table to sum to 15, the card remains on the table for the next player to potentially capture.
-
-**Escoba**: An Escoba is scored if the player captures all cards currently on the table in a single turn.
+- **Escoba**: An Escoba is scored if the player captures all cards currently on the table in a single turn.
 
 ### Scoring
 
