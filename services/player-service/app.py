@@ -4,19 +4,39 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# In-memory storage (replace with DB later)
+# In-memory storage
 players_db = {}
 player_stats_db = {}
+
+def init_player(username, email=None):
+    """Initialize a new player"""
+    if username not in players_db:
+        players_db[username] = {
+            'player_id': str(uuid.uuid4()),
+            'email': email,
+            'created_at': datetime.now().isoformat()
+        }
+    
+    if username not in player_stats_db:
+        player_stats_db[username] = {
+            'total_score': 0,
+            'level': 1,
+            'matches_played': 0,
+            'matches_won': 0,
+            'matches_lost': 0,
+            'win_rate': 0.0
+        }
 
 @app.route('/players/<username>', methods=['GET'])
 def get_player_profile(username):
     """Get player profile and stats"""
+    # Auto-initialize if player doesn't exist
+    if username not in players_db:
+        init_player(username)
+    
     player = players_db.get(username)
     stats = player_stats_db.get(username)
     
-    if not player or not stats:
-        return jsonify({"error": "Player not found"}), 404
-        
     profile = {
         "player_id": player.get('player_id'),
         "username": username,
@@ -34,26 +54,26 @@ def get_player_profile(username):
 
 @app.route('/players/<username>/stats', methods=['PUT'])
 def update_player_stats(username):
-    """Update player stats after match"""
+    """Update player stats after match or initialize player"""
     data = request.get_json()
     
     if not data:
         return jsonify({"error": "JSON data required"}), 400
-        
-    if username not in player_stats_db:
-        # Initialize if doesn't exist
-        player_stats_db[username] = {
-            'total_score': 0,
-            'level': 1,
-            'matches_played': 0,
-            'matches_won': 0,
-            'matches_lost': 0,
-            'win_rate': 0.0
-        }
+    
+    # Initialize player if doesn't exist
+    if username not in players_db:
+        init_player(username)
     
     stats = player_stats_db[username]
     
-    # Update stats
+    # If this is an initialization request
+    if data.get('match_result') == 'init':
+        return jsonify({
+            "message": "Player initialized", 
+            "stats": stats
+        })
+    
+    # Update stats for actual match results
     if 'match_result' in data:
         stats['matches_played'] += 1
         if data['match_result'] == 'win':
@@ -75,4 +95,5 @@ def health():
     return jsonify({"status": "Player service is running"})
 
 if __name__ == '__main__':
+    print("✅ Player service starting on port 5004...")
     app.run(host='0.0.0.0', port=5004, debug=True)
