@@ -79,20 +79,13 @@ services:
     networks:
       - escoba-network
 
-  # FRONTEND SEMPLIFICATO - SOLO NGINX
+  # FRONTEND con Node.js http-server
   frontend:
-  image: node:18-alpine
-  working_dir: /app
-  ports:
-    - "8080:8080"
-  volumes:
-    - ./frontend:/app
-  command: >
-    sh -c "
-      npm install -g http-server &&
-      http-server -p 8080 -c-1 --cors"
-  networks:
-    - escoba-network
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    networks:
+      - escoba-network
 
   # Databases
   auth-db:
@@ -156,5 +149,3 @@ volumes:
 networks:
   escoba-network:
     driver: bridge
-
-
