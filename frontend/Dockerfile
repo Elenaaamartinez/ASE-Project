@@ -1,13 +1,9 @@
-FROM python:3.9-alpine
+FROM nginx:alpine
 
-WORKDIR /app
-COPY . .
+# Copia i file statici nella cartella di nginx
+COPY . /usr/share/nginx/html/
 
-# Installa le dipendenze (se necessario in futuro)
-# RUN pip install --no-cache-dir -r requirements.txt
+# Esponi la porta 80
+EXPOSE 80
 
-# Esponi la porta
-EXPOSE 8080
-
-# Avvia il server Python semplice
-CMD ["python", "server.py"]
+# Nginx si avvia automaticamente
