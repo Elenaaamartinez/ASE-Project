@@ -199,11 +199,31 @@ def login():
 
         stored_username, stored_hash = user
 
-        # Verify password
-        if not bcrypt.checkpw(password.encode('utf-8'), stored_hash):
+        # DEBUG: Verifica il tipo di stored_hash
+        print(f"DEBUG: Type of stored_hash: {type(stored_hash)}")
+        
+        # Converti stored_hash in bytes se necessario
+        if isinstance(stored_hash, memoryview):
+            stored_hash = stored_hash.tobytes()
+        elif isinstance(stored_hash, str):
+            stored_hash = stored_hash.encode('utf-8')
+        elif hasattr(stored_hash, 'tobytes'):
+            stored_hash = stored_hash.tobytes()
+        
+        # Converti la password in bytes
+        password_bytes = password.encode('utf-8')
+        
+        print(f"DEBUG: Verifying password for user: {username}")
+        print(f"DEBUG: Stored hash type: {type(stored_hash)}, length: {len(stored_hash) if stored_hash else 0}")
+        
+        # Verifica la password
+        if not bcrypt.checkpw(password_bytes, stored_hash):
+            print(f"DEBUG: Password verification failed for user: {username}")
             cur.close()
             conn.close()
             return jsonify({"error": "Invalid credentials"}), 401
+
+        print(f"DEBUG: Password verification successful for user: {username}")
 
         # Update last login
         cur.execute(
@@ -241,6 +261,8 @@ def login():
 
     except Exception as e:
         print(f"❌ Login error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Login failed: {str(e)}"}), 500
 
 @app.route('/validate-token', methods=['POST'])
@@ -290,4 +312,5 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5001, debug=True)
     else:
         print("❌ Failed to initialize database, service cannot start")
+
 
