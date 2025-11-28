@@ -1,9 +1,15 @@
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Copia i file statici nella cartella di nginx
-COPY . /usr/share/nginx/html/
+WORKDIR /app
 
-# Esponi la porta 80
-EXPOSE 80
+# Copia i file del frontend
+COPY . .
 
-# Nginx si avvia automaticamente
+# Installa http-server globalmente
+RUN npm install -g http-server
+
+# Esponi la porta
+EXPOSE 8080
+
+# Avvia il server
+CMD ["http-server", "-p", "8080", "-c-1", "--cors"]
