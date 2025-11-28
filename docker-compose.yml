@@ -7,15 +7,6 @@ services:
       - "5000:5000"
     environment:
       - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
-    depends_on:
-      auth-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - escoba-network
 
@@ -32,14 +23,7 @@ services:
       - DB_PASSWORD=password
       - DB_PORT=5432
     depends_on:
-      auth-db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - auth-db
     networks:
       - escoba-network
 
@@ -49,11 +33,6 @@ services:
       - "5002"
     environment:
       - FLASK_ENV=development
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - escoba-network
 
@@ -63,11 +42,8 @@ services:
       - "5003"
     environment:
       - FLASK_ENV=development
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    depends_on:
+      - match-db
     networks:
       - escoba-network
 
@@ -77,11 +53,13 @@ services:
       - "5004"
     environment:
       - FLASK_ENV=development
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - DB_HOST=player-db
+      - DB_NAME=player_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_PORT=5432
+    depends_on:
+      - player-db
     networks:
       - escoba-network
 
@@ -91,11 +69,13 @@ services:
       - "5005"
     environment:
       - FLASK_ENV=development
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - DB_HOST=history-db
+      - DB_NAME=history_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_PORT=5432
+    depends_on:
+      - history-db
     networks:
       - escoba-network
 
@@ -108,28 +88,7 @@ services:
       - POSTGRES_DB=auth_db
     volumes:
       - auth_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d auth_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-    networks:
-      - escoba-network
-
-  cards-db:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=cards_db
-    volumes:
-      - cards_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d cards_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./databases/init-scripts/auth-init.sql:/docker-entrypoint-initdb.d/01-auth-init.sql
     networks:
       - escoba-network
 
@@ -141,11 +100,19 @@ services:
       - POSTGRES_DB=player_db
     volumes:
       - player_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d player_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./databases/init-scripts/player-init.sql:/docker-entrypoint-initdb.d/01-player-init.sql
+    networks:
+      - escoba-network
+
+  cards-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=cards_db
+    volumes:
+      - cards_data:/var/lib/postgresql/data
+      - ./databases/init-scripts/cards-init.sql:/docker-entrypoint-initdb.d/01-cards-init.sql
     networks:
       - escoba-network
 
@@ -157,11 +124,7 @@ services:
       - POSTGRES_DB=history_db
     volumes:
       - history_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d history_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./databases/init-scripts/history-init.sql:/docker-entrypoint-initdb.d/01-history-init.sql
     networks:
       - escoba-network
 
@@ -169,11 +132,6 @@ services:
     image: redis:6
     volumes:
       - match_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - escoba-network
 
