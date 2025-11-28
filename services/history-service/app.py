@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import psycopg2
 import os
+from flask_cors import CORS  # AGGIUNGI
 
 app = Flask(__name__)
+CORS(app)  # AGGIUNGI
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -231,3 +233,4 @@ if __name__ == '__main__':
     init_db()
     print("✅ History service starting on port 5005...")
     app.run(host='0.0.0.0', port=5005, debug=True)
+
