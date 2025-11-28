@@ -1,6 +1,8 @@
 from flask import Flask, jsonify
+from flask_cors import CORS  # AGGIUNGI
 
 app = Flask(__name__)
+CORS(app)  # AGGIUNGI
 
 # Spanish deck data (40 cards)
 SPANISH_DECK = [
@@ -75,3 +77,4 @@ def health():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)
+
