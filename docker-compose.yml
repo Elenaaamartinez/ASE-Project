@@ -81,9 +81,16 @@ services:
 
   # FRONTEND SEMPLIFICATO - SOLO NGINX
   frontend:
-  build: ./frontend
+  image: node:18-alpine
+  working_dir: /app
   ports:
-    - "8080:80"
+    - "8080:8080"
+  volumes:
+    - ./frontend:/app
+  command: >
+    sh -c "
+      npm install -g http-server &&
+      http-server -p 8080 -c-1 --cors"
   networks:
     - escoba-network
 
@@ -149,4 +156,5 @@ volumes:
 networks:
   escoba-network:
     driver: bridge
+
 
