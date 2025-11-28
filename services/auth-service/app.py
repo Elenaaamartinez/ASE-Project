@@ -7,9 +7,11 @@ import bcrypt
 import psycopg2
 import os
 import time
+from flask_cors import CORS  # AGGIUNGI QUESTO
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-super-secret-key-change-in-production')
+CORS(app)  # AGGIUNGI QUESTO PER IL FRONTEND
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-super-secret-jwt-key-change-in-production-2025')
 
 # Database connection with retry logic
 def wait_for_db(max_retries=30, retry_interval=2):
@@ -288,3 +290,4 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5001, debug=True)
     else:
         print("❌ Failed to initialize database, service cannot start")
+
