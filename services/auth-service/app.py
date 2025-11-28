@@ -6,11 +6,36 @@ import requests
 import bcrypt
 import psycopg2
 import os
+import time
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-super-secret-key-change-in-production')
 
-# Database connection
+# Database connection with retry logic
+def wait_for_db(max_retries=30, retry_interval=2):
+    """Wait for database to be ready"""
+    print("🔄 Waiting for database connection...")
+    for i in range(max_retries):
+        try:
+            conn = psycopg2.connect(
+                host=os.environ.get('DB_HOST', 'auth-db'),
+                database=os.environ.get('DB_NAME', 'auth_db'),
+                user=os.environ.get('DB_USER', 'user'),
+                password=os.environ.get('DB_PASSWORD', 'password'),
+                port=os.environ.get('DB_PORT', '5432'),
+                connect_timeout=5
+            )
+            conn.close()
+            print("✅ Database connection successful")
+            return True
+        except psycopg2.OperationalError as e:
+            if i < max_retries - 1:
+                print(f"⏳ Database not ready, retrying... ({i+1}/{max_retries}) - {str(e)}")
+                time.sleep(retry_interval)
+            else:
+                print(f"❌ Failed to connect to database after {max_retries} attempts: {e}")
+                return False
+
 def get_db_connection():
     conn = psycopg2.connect(
         host=os.environ.get('DB_HOST', 'auth-db'),
@@ -23,40 +48,55 @@ def get_db_connection():
 
 def init_db():
     """Initialize database tables"""
+    if not wait_for_db():
+        print("❌ Cannot initialize database - connection failed")
+        return False
+        
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Create users table
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            email VARCHAR(100) UNIQUE,
-            password_hash BYTEA NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            last_login TIMESTAMP,
-            account_status VARCHAR(20) DEFAULT 'active'
-        )
-    ''')
-    
-    # Create sessions table
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS sessions (
-            session_id UUID PRIMARY KEY,
-            username VARCHAR(50) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            expires_at TIMESTAMP NOT NULL,
-            FOREIGN KEY (username) REFERENCES users(username)
-        )
-    ''')
-    
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        # Create users table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                email VARCHAR(100) UNIQUE,
+                password_hash BYTEA NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_login TIMESTAMP,
+                account_status VARCHAR(20) DEFAULT 'active'
+            )
+        ''')
+        
+        # Create sessions table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id UUID PRIMARY KEY,
+                username VARCHAR(50) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                FOREIGN KEY (username) REFERENCES users(username)
+            )
+        ''')
+        
+        conn.commit()
+        print("✅ Database tables created successfully")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error creating database tables: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cur.close()
+        conn.close()
 
 def create_player_in_player_service(username, email=None):
     """Create player profile in Player Service when user registers"""
     try:
+        # Wait a bit for player service to be ready
+        time.sleep(2)
         player_service_url = "http://player-service:5004"
         
         response = requests.put(
@@ -65,11 +105,12 @@ def create_player_in_player_service(username, email=None):
                 "match_result": "init",
                 "score_delta": 0
             },
-            timeout=5
+            timeout=10
         )
+        print(f"✅ Player profile creation response: {response.status_code}")
         return response.status_code == 200
     except Exception as e:
-        print(f"Error creating player profile: {e}")
+        print(f"⚠️  Could not create player profile: {e}")
         return False
 
 @app.route('/register', methods=['POST'])
@@ -124,6 +165,7 @@ def register():
         }), 201
 
     except Exception as e:
+        print(f"❌ Registration error: {e}")
         return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
 @app.route('/login', methods=['POST'])
@@ -196,6 +238,7 @@ def login():
         })
 
     except Exception as e:
+        print(f"❌ Login error: {e}")
         return jsonify({"error": f"Login failed: {str(e)}"}), 500
 
 @app.route('/validate-token', methods=['POST'])
@@ -224,12 +267,24 @@ def health():
         cur.execute('SELECT 1')
         cur.close()
         conn.close()
-        return jsonify({"status": "Auth service is running", "database": "connected"})
+        return jsonify({
+            "status": "Auth service is running", 
+            "database": "connected",
+            "timestamp": datetime.now().isoformat()
+        })
     except Exception as e:
-        return jsonify({"status": "Auth service is running", "database": "disconnected", "error": str(e)}), 503
+        return jsonify({
+            "status": "Auth service is running", 
+            "database": "disconnected", 
+            "error": str(e)
+        }), 503
 
 if __name__ == '__main__':
+    print("🚀 Starting Auth Service...")
     print("🔄 Initializing database...")
-    init_db()
-    print("✅ Auth service starting on port 5001...")
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    if init_db():
+        print("✅ Database initialized successfully")
+        print("✅ Auth service starting on port 5001...")
+        app.run(host='0.0.0.0', port=5001, debug=True)
+    else:
+        print("❌ Failed to initialize database, service cannot start")
