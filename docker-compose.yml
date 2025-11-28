@@ -81,13 +81,11 @@ services:
 
   # FRONTEND SEMPLIFICATO - SOLO NGINX
   frontend:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
-    networks:
-      - escoba-network
+  build: ./frontend
+  ports:
+    - "8080:80"
+  networks:
+    - escoba-network
 
   # Databases
   auth-db:
@@ -151,3 +149,4 @@ volumes:
 networks:
   escoba-network:
     driver: bridge
+
