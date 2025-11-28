@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Escoba - Card Game</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎴 La Escoba</h1>
+            <nav>
+                <button id="loginBtn">Accedi</button>
+                <button id="registerBtn">Registrati</button>
+                <button id="playBtn" style="display:none">Gioca</button>
+                <button id="profileBtn" style="display:none">Profilo</button>
+                <button id="logoutBtn" style="display:none">Esci</button>
+            </nav>
+        </header>
+        
+        <main>
+            <div id="welcome">
+                <h2>Benvenuto a La Escoba!</h2>
+                <p>Il classico gioco di carte spagnolo</p>
+                <div class="card-preview">
+                    <div class="card">
+                        <div class="card-value">7</div>
+                        <div class="suit red">♦</div>
+                        <div class="card-name">Oros</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">10</div>
+                        <div class="suit red">♥</div>
+                        <div class="card-name">Copas</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-value">4</div>
+                        <div class="suit black">♠</div>
+                        <div class="card-name">Espadas</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="gameSection" style="display:none">
+                <!-- Il contenuto del gioco viene caricato dinamicamente -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
