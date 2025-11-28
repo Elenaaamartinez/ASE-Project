@@ -1,290 +1,216 @@
 from flask import Flask, request, jsonify
-from datetime import datetime, timedelta
-import jwt
-import uuid
 import requests
-import bcrypt
-import psycopg2
+import jwt
 import os
-import time
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-super-secret-key-change-in-production')
 
-# Database connection with retry logic
-def wait_for_db(max_retries=30, retry_interval=2):
-    """Wait for database to be ready"""
-    print("🔄 Waiting for database connection...")
-    for i in range(max_retries):
-        try:
-            conn = psycopg2.connect(
-                host=os.environ.get('DB_HOST', 'auth-db'),
-                database=os.environ.get('DB_NAME', 'auth_db'),
-                user=os.environ.get('DB_USER', 'user'),
-                password=os.environ.get('DB_PASSWORD', 'password'),
-                port=os.environ.get('DB_PORT', '5432'),
-                connect_timeout=5
-            )
-            conn.close()
-            print("✅ Database connection successful")
-            return True
-        except psycopg2.OperationalError as e:
-            if i < max_retries - 1:
-                print(f"⏳ Database not ready, retrying... ({i+1}/{max_retries}) - {str(e)}")
-                time.sleep(retry_interval)
-            else:
-                print(f"❌ Failed to connect to database after {max_retries} attempts: {e}")
-                return False
+# Service URLs
+AUTH_SERVICE_URL = "http://auth-service:5001"
+CARDS_SERVICE_URL = "http://cards-service:5002"
+MATCHES_SERVICE_URL = "http://matches-service:5003"
+PLAYER_SERVICE_URL = "http://player-service:5004"
+HISTORY_SERVICE_URL = "http://history-service:5005"
 
-def get_db_connection():
-    conn = psycopg2.connect(
-        host=os.environ.get('DB_HOST', 'auth-db'),
-        database=os.environ.get('DB_NAME', 'auth_db'),
-        user=os.environ.get('DB_USER', 'user'),
-        password=os.environ.get('DB_PASSWORD', 'password'),
-        port=os.environ.get('DB_PORT', '5432')
-    )
-    return conn
+# Public endpoints that don't require authentication
+PUBLIC_ENDPOINTS = [
+    '/auth/register',
+    '/auth/login', 
+    '/auth/health',
+    '/auth/validate-token',
+    '/cards/cards',
+    '/cards/health',
+    '/health',
+    '/players/health',
+    '/matches/health',
+    '/history/health'
+]
 
-def init_db():
-    """Initialize database tables"""
-    if not wait_for_db():
-        print("❌ Cannot initialize database - connection failed")
-        return False
-        
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
+def validate_jwt_token(token):
+    """Validate JWT token with Auth Service"""
     try:
-        # Create users table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                email VARCHAR(100) UNIQUE,
-                password_hash BYTEA NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP,
-                account_status VARCHAR(20) DEFAULT 'active'
-            )
-        ''')
-        
-        # Create sessions table
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS sessions (
-                session_id UUID PRIMARY KEY,
-                username VARCHAR(50) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                expires_at TIMESTAMP NOT NULL,
-                FOREIGN KEY (username) REFERENCES users(username)
-            )
-        ''')
-        
-        conn.commit()
-        print("✅ Database tables created successfully")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Error creating database tables: {e}")
-        conn.rollback()
-        return False
-    finally:
-        cur.close()
-        conn.close()
-
-def create_player_in_player_service(username, email=None):
-    """Create player profile in Player Service when user registers"""
-    try:
-        # Wait a bit for player service to be ready
-        time.sleep(2)
-        player_service_url = "http://player-service:5004"
-        
-        response = requests.put(
-            f"{player_service_url}/players/{username}/stats",
-            json={
-                "match_result": "init",
-                "score_delta": 0
-            },
-            timeout=10
+        response = requests.post(
+            f"{AUTH_SERVICE_URL}/validate-token",
+            json={"token": token},
+            timeout=5
         )
-        print(f"✅ Player profile creation response: {response.status_code}")
-        return response.status_code == 200
-    except Exception as e:
-        print(f"⚠️  Could not create player profile: {e}")
-        return False
-
-@app.route('/register', methods=['POST'])
-def register():
-    """Register a new user with password hashing"""
-    data = request.get_json()
-
-    if not data or not data.get('username') or not data.get('password'):
-        return jsonify({"error": "Username and password required"}), 400
-
-    username = data['username']
-    password = data['password']
-    email = data.get('email')
-
-    # Validate password strength
-    if len(password) < 6:
-        return jsonify({"error": "Password must be at least 6 characters"}), 400
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # Check if user already exists
-        cur.execute('SELECT username FROM users WHERE username = %s', (username,))
-        if cur.fetchone():
-            cur.close()
-            conn.close()
-            return jsonify({"error": "Username already exists"}), 400
-
-        # Hash password
-        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-        # Insert new user
-        cur.execute(
-            'INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)',
-            (username, email, password_hash)
-        )
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        # Create player profile
-        if create_player_in_player_service(username, email):
-            print(f"✅ Player profile created for {username}")
+        if response.status_code == 200:
+            return True, response.json()
         else:
-            print(f"⚠️  Could not create player profile for {username}")
+            return False, response.json()
+    except requests.exceptions.RequestException as e:
+        return False, {"error": f"Auth service unavailable: {str(e)}"}
 
-        return jsonify({
-            "message": "User registered successfully",
-            "username": username
-        }), 201
+def extract_token_from_header():
+    """Extract JWT token from Authorization header"""
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        return auth_header[7:]
+    return None
 
-    except Exception as e:
-        print(f"❌ Registration error: {e}")
-        return jsonify({"error": f"Registration failed: {str(e)}"}), 500
-
-@app.route('/login', methods=['POST'])
-def login():
-    """Login user and return JWT token"""
-    data = request.get_json()
-
-    if not data or not data.get('username') or not data.get('password'):
-        return jsonify({"error": "Username and password required"}), 400
-
-    username = data['username']
-    password = data['password']
-
+def make_request(service_url, path, method):
+    """Helper function to make requests to services"""
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # Get user from database
-        cur.execute(
-            'SELECT username, password_hash FROM users WHERE username = %s AND account_status = %s',
-            (username, 'active')
-        )
-        user = cur.fetchone()
-
-        if not user:
-            cur.close()
-            conn.close()
-            return jsonify({"error": "Invalid credentials or inactive account"}), 401
-
-        stored_username, stored_hash = user
-
-        # Verify password
-        if not bcrypt.checkpw(password.encode('utf-8'), stored_hash):
-            cur.close()
-            conn.close()
-            return jsonify({"error": "Invalid credentials"}), 401
-
-        # Update last login
-        cur.execute(
-            'UPDATE users SET last_login = %s WHERE username = %s',
-            (datetime.now(), username)
-        )
-
-        # Generate JWT token
-        token_payload = {
-            'username': username,
-            'exp': datetime.utcnow() + timedelta(hours=24),
-            'iat': datetime.utcnow()
-        }
-        token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm='HS256')
-
-        # Store session
-        session_id = str(uuid.uuid4())
-        expires_at = datetime.now() + timedelta(hours=24)
+        url = f"{service_url}/{path}"
         
-        cur.execute(
-            'INSERT INTO sessions (session_id, username, expires_at) VALUES (%s, %s, %s)',
-            (session_id, username, expires_at)
-        )
+        # Prepare headers (remove Host to avoid conflicts)
+        headers = {key: value for key, value in request.headers if key.lower() != 'host'}
+        
+        # Prepare request arguments
+        request_args = {
+            'method': method,
+            'url': url,
+            'headers': headers,
+            'params': request.args,
+            'timeout': 10
+        }
+        
+        # Only add JSON data for POST/PUT requests that have JSON content
+        if method in ['POST', 'PUT'] and request.get_data():
+            try:
+                request_args['json'] = request.get_json()
+            except:
+                # If JSON parsing fails, send raw data
+                request_args['data'] = request.get_data()
+                request_args['headers']['Content-Type'] = request.content_type
+        
+        response = requests.request(**request_args)
+        
+        # Return the response from the service
+        try:
+            return response.json(), response.status_code
+        except:
+            return response.text, response.status_code
+            
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"Service unavailable: {str(e)}"}), 503
 
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        return jsonify({
-            "message": "Login successful",
-            "token": token,
-            "session_id": session_id,
-            "username": username
-        })
-
-    except Exception as e:
-        print(f"❌ Login error: {e}")
-        return jsonify({"error": f"Login failed: {str(e)}"}), 500
-
-@app.route('/validate-token', methods=['POST'])
-def validate_token():
-    """Validate JWT token"""
-    data = request.get_json()
-    token = data.get('token')
-
+@app.before_request
+def authenticate_request():
+    """Authenticate requests before processing"""
+    # Skip authentication for public endpoints
+    if request.path in PUBLIC_ENDPOINTS:
+        return None
+    
+    # Skip OPTIONS requests (CORS preflight)
+    if request.method == 'OPTIONS':
+        return None
+    
+    # Extract and validate JWT token
+    token = extract_token_from_header()
     if not token:
-        return jsonify({"error": "Token required"}), 400
+        return jsonify({"error": "Authorization token required. Use: Authorization: Bearer <token>"}), 401
+    
+    is_valid, token_data = validate_jwt_token(token)
+    if not is_valid:
+        return jsonify({"error": token_data.get('error', 'Invalid token')}), 401
+    
+    # Add username to request context for downstream services
+    request.username = token_data.get('username')
+    
+    return None
 
-    try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        return jsonify({"valid": True, "username": payload['username']})
-    except jwt.ExpiredSignatureError:
-        return jsonify({"valid": False, "error": "Token expired"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"valid": False, "error": "Invalid token"}), 401
+# Auth routes
+@app.route('/auth/register', methods=['POST'])
+def auth_register():
+    return make_request(AUTH_SERVICE_URL, "register", "POST")
 
+@app.route('/auth/login', methods=['POST'])
+def auth_login():
+    return make_request(AUTH_SERVICE_URL, "login", "POST")
+
+@app.route('/auth/validate-token', methods=['POST'])
+def auth_validate_token():
+    return make_request(AUTH_SERVICE_URL, "validate-token", "POST")
+
+@app.route('/auth/health', methods=['GET'])
+def auth_health():
+    return make_request(AUTH_SERVICE_URL, "health", "GET")
+
+# Cards routes
+@app.route('/cards/cards', methods=['GET'])
+def cards_all():
+    return make_request(CARDS_SERVICE_URL, "cards", "GET")
+
+@app.route('/cards/cards/<int:card_id>', methods=['GET'])
+def cards_specific(card_id):
+    return make_request(CARDS_SERVICE_URL, f"cards/{card_id}", "GET")
+
+@app.route('/cards/health', methods=['GET'])
+def cards_health():
+    return make_request(CARDS_SERVICE_URL, "health", "GET")
+
+# Matches routes
+@app.route('/matches/matches', methods=['POST'])
+def matches_create():
+    return make_request(MATCHES_SERVICE_URL, "matches", "POST")
+
+@app.route('/matches/matches/<match_id>', methods=['GET'])
+def matches_get(match_id):
+    return make_request(MATCHES_SERVICE_URL, f"matches/{match_id}", "GET")
+
+@app.route('/matches/matches/<match_id>/play', methods=['POST'])
+def matches_play(match_id):
+    return make_request(MATCHES_SERVICE_URL, f"matches/{match_id}/play", "POST")
+
+@app.route('/matches/health', methods=['GET'])
+def matches_health():
+    return make_request(MATCHES_SERVICE_URL, "health", "GET")
+
+# Player routes
+@app.route('/players/<username>', methods=['GET'])
+def players_get(username):
+    return make_request(PLAYER_SERVICE_URL, f"players/{username}", "GET")
+
+@app.route('/players/<username>/stats', methods=['PUT'])
+def players_update_stats(username):
+    return make_request(PLAYER_SERVICE_URL, f"players/{username}/stats", "PUT")
+
+@app.route('/players/health', methods=['GET'])
+def players_health():
+    return make_request(PLAYER_SERVICE_URL, "health", "GET")
+
+# History routes
+@app.route('/history/<username>', methods=['GET'])
+def history_get(username):
+    return make_request(HISTORY_SERVICE_URL, f"history/{username}", "GET")
+
+@app.route('/history/matches', methods=['POST'])
+def history_save():
+    return make_request(HISTORY_SERVICE_URL, "history/matches", "POST")
+
+@app.route('/history/health', methods=['GET'])
+def history_health():
+    return make_request(HISTORY_SERVICE_URL, "health", "GET")
+
+# API Gateway health
 @app.route('/health', methods=['GET'])
 def health():
-    """Health check endpoint"""
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('SELECT 1')
-        cur.close()
-        conn.close()
-        return jsonify({
-            "status": "Auth service is running", 
-            "database": "connected",
-            "timestamp": datetime.now().isoformat()
-        })
-    except Exception as e:
-        return jsonify({
-            "status": "Auth service is running", 
-            "database": "disconnected", 
-            "error": str(e)
-        }), 503
+    return jsonify({
+        "status": "API Gateway is running", 
+        "authentication": "JWT validation enabled",
+        "public_endpoints": PUBLIC_ENDPOINTS,
+        "services": {
+            "auth": AUTH_SERVICE_URL,
+            "cards": CARDS_SERVICE_URL,
+            "matches": MATCHES_SERVICE_URL,
+            "players": PLAYER_SERVICE_URL,
+            "history": HISTORY_SERVICE_URL
+        }
+    })
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({"error": "Endpoint not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
-    print("🚀 Starting Auth Service...")
-    print("🔄 Initializing database...")
-    if init_db():
-        print("✅ Database initialized successfully")
-        print("✅ Auth service starting on port 5001...")
-        app.run(host='0.0.0.0', port=5001, debug=True)
-    else:
-        print("❌ Failed to initialize database, service cannot start")
+    print("🚀 API Gateway starting on port 5000...")
+    print("🔐 JWT Authentication: ENABLED")
+    print("📡 Public endpoints:", PUBLIC_ENDPOINTS)
+    app.run(host='0.0.0.0', port=5000, debug=True)
