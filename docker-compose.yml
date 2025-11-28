@@ -81,15 +81,13 @@ services:
 
   # FRONTEND - AGGIUNGI QUI, PRIMA DEI DATABASE
   frontend:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html
-    depends_on:
-      - api-gateway
-    networks:
-      - escoba-network
+  build: 
+    context: ./frontend
+    dockerfile: Dockerfile
+  ports:
+    - "8080:8080"
+  networks:
+    - escoba-network
 
   # Databases
   auth-db:
@@ -157,3 +155,4 @@ volumes:
 networks:
   escoba-network:
     driver: bridge
+
