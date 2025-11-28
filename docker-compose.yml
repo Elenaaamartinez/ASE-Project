@@ -3,12 +3,16 @@ services:
     build: ./services/api-gateway
     ports:
       - "5000:5000"
+    environment:
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production
     depends_on:
       - auth-service
       - cards-service
       - matches-service
       - player-service
       - history-service
+    networks:
+      - escoba-network
 
   auth-service:
     build: ./services/auth-service
@@ -16,9 +20,16 @@ services:
       - "5001"
     environment:
       - FLASK_ENV=development
-      - DATABASE_URL=postgresql://user:password@auth-db:5432/auth_db
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production
+      - DB_HOST=auth-db
+      - DB_NAME=auth_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_PORT=5432
     depends_on:
       - auth-db
+    networks:
+      - escoba-network
 
   cards-service:
     build: ./services/cards-service
@@ -26,9 +37,8 @@ services:
       - "5002"
     environment:
       - FLASK_ENV=development
-      - DATABASE_URL=postgresql://user:password@cards-db:5432/cards_db
-    depends_on:
-      - cards-db
+    networks:
+      - escoba-network
 
   matches-service:
     build: ./services/match-service
@@ -36,9 +46,8 @@ services:
       - "5003"
     environment:
       - FLASK_ENV=development
-      - REDIS_URL=redis://match-db:6379
-    depends_on:
-      - match-db
+    networks:
+      - escoba-network
 
   player-service:
     build: ./services/player-service
@@ -46,9 +55,8 @@ services:
       - "5004"
     environment:
       - FLASK_ENV=development
-      - DATABASE_URL=postgresql://user:password@player-db:5432/player_db
-    depends_on:
-      - player-db
+    networks:
+      - escoba-network
 
   history-service:
     build: ./services/history-service
@@ -56,9 +64,8 @@ services:
       - "5005"
     environment:
       - FLASK_ENV=development
-      - DATABASE_URL=postgresql://user:password@history-db:5432/history_db
-    depends_on:
-      - history-db
+    networks:
+      - escoba-network
 
   # Databases
   auth-db:
@@ -69,6 +76,9 @@ services:
       - POSTGRES_DB=auth_db
     volumes:
       - auth_data:/var/lib/postgresql/data
+      - ./services/auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - escoba-network
 
   cards-db:
     image: postgres:13
@@ -78,6 +88,8 @@ services:
       - POSTGRES_DB=cards_db
     volumes:
       - cards_data:/var/lib/postgresql/data
+    networks:
+      - escoba-network
 
   player-db:
     image: postgres:13
@@ -87,6 +99,8 @@ services:
       - POSTGRES_DB=player_db
     volumes:
       - player_data:/var/lib/postgresql/data
+    networks:
+      - escoba-network
 
   history-db:
     image: postgres:13
@@ -96,11 +110,15 @@ services:
       - POSTGRES_DB=history_db
     volumes:
       - history_data:/var/lib/postgresql/data
+    networks:
+      - escoba-network
 
   match-db:
     image: redis:6
     volumes:
       - match_data:/data
+    networks:
+      - escoba-network
 
 volumes:
   auth_data:
@@ -108,3 +126,7 @@ volumes:
   player_data:
   history_data:
   match_data:
+
+networks:
+  escoba-network:
+    driver: bridge
