@@ -1,8 +1,17 @@
 from flask import Flask, request, jsonify
+from datetime import datetime, timedelta
+import jwt
+import uuid
 import requests
+import bcrypt
+import psycopg2
 import os
+import time
+from flask_cors import CORS  # AGGIUNGI QUESTO
 
 app = Flask(__name__)
+CORS(app)  # AGGIUNGI QUESTO PER IL FRONTEND
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-super-secret-jwt-key-change-in-production-2025')
 
 # Service URLs
 AUTH_SERVICE_URL = "http://auth-service:5001"
@@ -127,3 +136,4 @@ if __name__ == '__main__':
     print("🚀 API Gateway starting on port 5000...")
     print("📡 Ready to forward requests to microservices")
     app.run(host='0.0.0.0', port=5000, debug=True)
+
