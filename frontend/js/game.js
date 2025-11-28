@@ -209,3 +209,71 @@ class GameManager {
                             </div>
                         `;
                     }).join('') : '<p>Nessuna carta catturata ancora</p>'}
+                </div>
+            </div>
+        `;
+    }
+
+    async playCard(cardId) {
+        if (!this.currentMatch || !this.playerName) return;
+
+        const currentState = await EscobaAPI.getMatchState(this.currentMatch, this.playerName);
+        if (currentState.current_player !== this.playerName) {
+            Utils.showNotification('Non è il tuo turno!', 'error');
+            return;
+        }
+
+        try {
+            Utils.showNotification('Giocando carta...', 'info');
+            const result = await EscobaAPI.playCard(this.currentMatch, this.playerName, cardId);
+            
+            // Aggiorna immediatamente lo stato
+            await this.updateGameState();
+            
+            if (result.message) {
+                Utils.showNotification(result.message, 'success');
+            }
+            
+        } catch (error) {
+            console.error('Error playing card:', error);
+            Utils.showNotification('Errore durante la mossa: ' + (error.message || 'Mossa non valida'), 'error');
+        }
+    }
+
+    leaveGame() {
+        if (this.gameInterval) {
+            clearInterval(this.gameInterval);
+            this.gameInterval = null;
+        }
+        this.currentMatch = null;
+        this.playerName = null;
+        this.opponentName = null;
+        
+        Utils.showNotification('Partita abbandonata', 'info');
+        authManager.showGame(); // Torna al menu principale
+    }
+
+    showGameResult(state) {
+        const winner = state.scores[state.players[0]] > state.scores[state.players[1]] ? 
+                      state.players[0] : state.players[1];
+        
+        const isWinner = winner === this.playerName;
+        
+        document.getElementById('gameState').innerHTML += `
+            <div class="game-result ${isWinner ? 'victory' : 'defeat'}">
+                <h3>${isWinner ? '🎉 VITTORIA!' : '😔 SCONFITTA'}</h3>
+                <p>Vincitore: <strong>${winner}</strong></p>
+                <p>Punteggio Finale: ${Utils.formatScore(state.scores)}</p>
+                <button onclick="gameManager.leaveGame()">Torna al Menu</button>
+                ${this.opponentName !== 'bot_player' ? 
+                  `<button onclick="gameManager.createGame('${this.playerName}', '${this.opponentName}')">Rivincita</button>` : 
+                  ''
+                }
+            </div>
+        `;
+
+        Utils.showNotification(`Partita terminata! Vincitore: ${winner}`, isWinner ? 'success' : 'info');
+    }
+}
+
+const gameManager = new GameManager();
