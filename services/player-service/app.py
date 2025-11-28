@@ -3,8 +3,10 @@ import uuid
 import os
 import psycopg2
 from datetime import datetime
+from flask_cors import CORS  # AGGIUNGI
 
 app = Flask(__name__)
+CORS(app)  # AGGIUNGI
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -170,3 +172,4 @@ def health():
 if __name__ == '__main__':
     print("✅ Player service starting on port 5004...")
     app.run(host='0.0.0.0', port=5004, debug=True)
+
