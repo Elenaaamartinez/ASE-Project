@@ -9,8 +9,8 @@ app.config['SECRET_KEY'] = 'player-service-secret-key'
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host=os.environ.get('DB_HOST', 'player'),
-        database=os.environ.get('DB_NAME', 'player'),
+        host=os.environ.get('DB_HOST', 'player-db'),  # ← CORRETTO
+        database=os.environ.get('DB_NAME', 'player_db'),  # ← CORRETTO
         user=os.environ.get('DB_USER', 'user'),
         password=os.environ.get('DB_PASSWORD', 'password'),
         port=os.environ.get('DB_PORT', '5432')
@@ -250,13 +250,12 @@ def health():
         cur.execute('SELECT 1')
         cur.close()
         conn.close()
-        return jsonify({"status": f"{app.config['SERVICE_NAME']} is running", "database": "connected"})
+        return jsonify({"status": "Player service is running", "database": "connected"})
     except Exception as e:
-        return jsonify({"status": f"{app.config['SERVICE_NAME']} is running", "database": "disconnected", "error": str(e)}), 503
+        return jsonify({"status": "Player service is running", "database": "disconnected", "error": str(e)}), 503
 
 if __name__ == '__main__':
     print("Initializing database of player-service...")
     init_db()
     print("Player service starting on port 5004...")
     app.run(host='0.0.0.0', port=5004, debug=True)
-    
