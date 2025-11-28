@@ -5,8 +5,10 @@ from datetime import datetime
 import redis
 import requests
 import json
+from flask_cors import CORS  # AGGIUNGI
 
 app = Flask(__name__)
+CORS(app)  # AGGIUNGI
 
 # Configurazione Redis
 redis_client = redis.Redis(host='match-db', port=6379, db=0, decode_responses=True)
@@ -384,3 +386,4 @@ if __name__ == '__main__':
     print("🃏 La Escoba game logic loaded")
     print("🗄️  Redis storage enabled")
     app.run(host='0.0.0.0', port=5003, debug=True)
+
