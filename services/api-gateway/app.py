@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify
 import requests
+import jwt
+import os
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Service URLs
 AUTH_SERVICE_URL = "http://auth-service:5001"
@@ -9,6 +12,38 @@ CARDS_SERVICE_URL = "http://cards-service:5002"
 MATCHES_SERVICE_URL = "http://matches-service:5003"
 PLAYER_SERVICE_URL = "http://player-service:5004"
 HISTORY_SERVICE_URL = "http://history-service:5005"
+
+# Public endpoints that don't require authentication
+PUBLIC_ENDPOINTS = [
+    '/auth/register',
+    '/auth/login', 
+    '/auth/health',
+    '/cards/cards',
+    '/cards/health',
+    '/health',
+    '/players/health',
+    '/matches/health',
+    '/history/health'
+]
+
+def validate_jwt_token(token):
+    """Validate JWT token with Auth Service"""
+    try:
+        response = requests.post(
+            f"{AUTH_SERVICE_URL}/validate-token",
+            json={"token": token},
+            timeout=5
+        )
+        return response.status_code == 200, response.json()
+    except requests.exceptions.RequestException:
+        return False, {"error": "Auth service unavailable"}
+
+def extract_token_from_header():
+    """Extract JWT token from Authorization header"""
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        return auth_header[7:]
+    return None
 
 def make_request(service_url, path, method):
     """Helper function to make requests to services"""
@@ -47,6 +82,31 @@ def make_request(service_url, path, method):
     except requests.exceptions.RequestException as e:
         return jsonify({"error": f"Service unavailable: {str(e)}"}), 503
 
+@app.before_request
+def authenticate_request():
+    """Authenticate requests before processing"""
+    # Skip authentication for public endpoints
+    if request.path in PUBLIC_ENDPOINTS:
+        return None
+    
+    # Skip OPTIONS requests (CORS preflight)
+    if request.method == 'OPTIONS':
+        return None
+    
+    # Extract and validate JWT token
+    token = extract_token_from_header()
+    if not token:
+        return jsonify({"error": "Authorization token required"}), 401
+    
+    is_valid, token_data = validate_jwt_token(token)
+    if not is_valid:
+        return jsonify({"error": token_data.get('error', 'Invalid token')}), 401
+    
+    # Add username to request context for downstream services
+    request.username = token_data.get('username')
+    
+    return None
+
 # Auth routes
 @app.route('/auth/register', methods=['POST'])
 def auth_register():
@@ -55,6 +115,10 @@ def auth_register():
 @app.route('/auth/login', methods=['POST'])
 def auth_login():
     return make_request(AUTH_SERVICE_URL, "login", "POST")
+
+@app.route('/auth/validate-token', methods=['POST'])
+def auth_validate_token():
+    return make_request(AUTH_SERVICE_URL, "validate-token", "POST")
 
 @app.route('/auth/health', methods=['GET'])
 def auth_health():
@@ -119,14 +183,19 @@ def history_health():
 # API Gateway health
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "API Gateway is running", "services": {
-        "auth": AUTH_SERVICE_URL,
-        "cards": CARDS_SERVICE_URL,
-        "matches": MATCHES_SERVICE_URL,
-        "players": PLAYER_SERVICE_URL,
-        "history": HISTORY_SERVICE_URL
-    }})
+    return jsonify({
+        "status": "API Gateway is running", 
+        "authentication": "JWT validation enabled",
+        "services": {
+            "auth": AUTH_SERVICE_URL,
+            "cards": CARDS_SERVICE_URL,
+            "matches": MATCHES_SERVICE_URL,
+            "players": PLAYER_SERVICE_URL,
+            "history": HISTORY_SERVICE_URL
+        }
+    })
 
 if __name__ == '__main__':
     print("🚀 API Gateway starting on port 5000...")
+    print("🔐 JWT Authentication: ENABLED")
     app.run(host='0.0.0.0', port=5000, debug=True)
