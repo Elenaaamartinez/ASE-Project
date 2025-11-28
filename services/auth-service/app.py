@@ -142,8 +142,12 @@ def register():
             conn.close()
             return jsonify({"error": "Username already exists"}), 400
 
-        # Hash password
-        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        # Hash password - USIAMO LA VERSIONE SICURA
+        print(f"DEBUG: Hashing password for user: {username}")
+        salt = bcrypt.gensalt()
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
+        
+        print(f"DEBUG: Generated hash type: {type(password_hash)}, length: {len(password_hash)}")
 
         # Insert new user
         cur.execute(
@@ -168,6 +172,8 @@ def register():
 
     except Exception as e:
         print(f"❌ Registration error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Registration failed: {str(e)}"}), 500
 
 @app.route('/login', methods=['POST'])
@@ -312,5 +318,6 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5001, debug=True)
     else:
         print("❌ Failed to initialize database, service cannot start")
+
 
 
