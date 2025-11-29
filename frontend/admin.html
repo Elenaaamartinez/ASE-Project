@@ -3,112 +3,449 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Database Viewer</title>
+    <title>Admin - Database Viewer - La Escoba</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .database-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .refresh-btn { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            background: #34495e;
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn-refresh {
+            background: #27ae60;
+        }
+        
+        .btn-refresh:hover {
+            background: #219a52;
+        }
+        
+        .btn-clear {
+            background: #e74c3c;
+        }
+        
+        .btn-clear:hover {
+            background: #c0392b;
+        }
+        
+        .database-section {
+            margin: 20px;
+            padding: 20px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #bdc3c7;
+        }
+        
+        .section-title {
+            font-size: 1.5em;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .data-container {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 500px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .error {
+            color: #e74c3c;
+            background: #ffeaa7;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .success {
+            color: #27ae60;
+            background: #d5f4e6;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>🔍 Database Viewer - La Escoba</h1>
-
-    <div class="database-section">
-        <h2>👥 Players Database</h2>
-        <button class="refresh-btn" onclick="loadPlayers()">Aggiorna Players</button>
-        <div id="playersData"></div>
-    </div>
-
-    <div class="database-section">
-        <h2>🎮 Matches Database</h2>
-        <button class="refresh-btn" onclick="loadMatches()">Aggiorna Partite</button>
-        <div id="matchesData"></div>
-    </div>
-
-    <div class="database-section">
-        <h2>🃏 Cards Database</h2>
-        <button class="refresh-btn" onclick="loadCards()">Aggiorna Carte</button>
-        <div id="cardsData"></div>
-    </div>
-
-    <div class="database-section">
-        <h2>📊 Player Stats</h2>
-        <button class="refresh-btn" onclick="loadPlayerStats()">Aggiorna Statistiche</button>
-        <div id="playerStatsData"></div>
+    <div class="container">
+        <header>
+            <h1>🔍 Database Admin Viewer</h1>
+            <div class="subtitle">La Escoba - Sistema di Monitoraggio Database</div>
+        </header>
+        
+        <div class="controls">
+            <button class="btn btn-refresh" onclick="loadAllData()">🔄 Aggiorna Tutto</button>
+            <button class="btn" onclick="loadPlayers()">👥 Carica Players</button>
+            <button class="btn" onclick="loadMatches()">🎮 Carica Partite</button>
+            <button class="btn" onclick="loadCards()">🃏 Carica Carte</button>
+            <button class="btn" onclick="loadStats()">📊 Carica Statistiche</button>
+            <button class="btn-clear" onclick="clearAll()">🗑️ Pulisci Tutto</button>
+        </div>
+        
+        <div class="database-section">
+            <div class="section-header">
+                <h2 class="section-title">👥 Players Database</h2>
+                <button class="btn" onclick="loadPlayers()">Aggiorna</button>
+            </div>
+            <div id="playersData" class="data-container loading">
+                Clicca "Carica Players" per visualizzare i dati...
+            </div>
+        </div>
+        
+        <div class="database-section">
+            <div class="section-header">
+                <h2 class="section-title">🎮 Matches & History</h2>
+                <button class="btn" onclick="loadMatches()">Aggiorna</button>
+            </div>
+            <div id="matchesData" class="data-container loading">
+                Clicca "Carica Partite" per visualizzare i dati...
+            </div>
+        </div>
+        
+        <div class="database-section">
+            <div class="section-header">
+                <h2 class="section-title">🃏 Cards Database</h2>
+                <button class="btn" onclick="loadCards()">Aggiorna</button>
+            </div>
+            <div id="cardsData" class="data-container loading">
+                Clicca "Carica Carte" per visualizzare i dati...
+            </div>
+        </div>
+        
+        <div class="database-section">
+            <div class="section-header">
+                <h2 class="section-title">📊 System Statistics</h2>
+                <button class="btn" onclick="loadStats()">Aggiorna</button>
+            </div>
+            <div id="statsData" class="data-container">
+                <div class="stats" id="statsContainer">
+                    Le statistiche verranno caricate qui...
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         const API_BASE = 'http://localhost:5000';
-
+        
+        // Format JSON for display
+        function formatJSON(data) {
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (e) {
+                    return data;
+                }
+            }
+            return JSON.stringify(data, null, 2);
+        }
+        
+        // Show loading state
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = '<div class="loading">⏳ Caricamento in corso...</div>';
+        }
+        
+        // Show error
+        function showError(elementId, error) {
+            document.getElementById(elementId).innerHTML = `<div class="error">❌ Errore: ${error.message}</div>`;
+        }
+        
+        // Load players data
         async function loadPlayers() {
+            showLoading('playersData');
             try {
-                const response = await fetch(`${API_BASE}/players/mario`);
-                const data = await response.json();
-                document.getElementById('playersData').innerHTML = 
-                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('playersData').innerHTML = 
-                    `<p style="color: red;">Errore: ${error.message}</p>`;
-            }
-        }
-
-        async function loadMatches() {
-            try {
-                const response = await fetch(`${API_BASE}/history/mario`);
-                const data = await response.json();
-                document.getElementById('matchesData').innerHTML = 
-                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('matchesData').innerHTML = 
-                    `<p style="color: red;">Errore: ${error.message}</p>`;
-            }
-        }
-
-        async function loadCards() {
-            try {
-                const response = await fetch(`${API_BASE}/cards/cards`);
-                const data = await response.json();
-                document.getElementById('cardsData').innerHTML = 
-                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
-            } catch (error) {
-                document.getElementById('cardsData').innerHTML = 
-                    `<p style="color: red;">Errore: ${error.message}</p>`;
-            }
-        }
-
-        async function loadPlayerStats() {
-            try {
-                // Carica diversi giocatori per vedere le statistiche
-                const players = ['mario', 'luigi'];
-                let allStats = {};
+                // Try to load multiple players
+                const testPlayers = ['mario', 'luigi', 'testplayer'];
+                let playersData = {};
                 
-                for (const player of players) {
+                for (const player of testPlayers) {
                     try {
                         const response = await fetch(`${API_BASE}/players/${player}`);
-                        allStats[player] = await response.json();
+                        if (response.ok) {
+                            playersData[player] = await response.json();
+                        }
                     } catch (e) {
-                        allStats[player] = { error: e.message };
+                        playersData[player] = { error: 'Player non trovato' };
                     }
                 }
                 
-                document.getElementById('playerStatsData').innerHTML = 
-                    `<pre>${JSON.stringify(allStats, null, 2)}</pre>`;
+                document.getElementById('playersData').innerHTML = 
+                    `<pre>${formatJSON(playersData)}</pre>`;
             } catch (error) {
-                document.getElementById('playerStatsData').innerHTML = 
-                    `<p style="color: red;">Errore: ${error.message}</p>`;
+                showError('playersData', error);
             }
         }
-
-        // Carica tutto all'avvio
-        window.onload = function() {
-            loadPlayers();
-            loadMatches();
-            loadCards();
-            loadPlayerStats();
-        };
+        
+        // Load matches data
+        async function loadMatches() {
+            showLoading('matchesData');
+            try {
+                const testPlayers = ['mario', 'luigi'];
+                let matchesData = {};
+                
+                for (const player of testPlayers) {
+                    try {
+                        const response = await fetch(`${API_BASE}/history/${player}`);
+                        if (response.ok) {
+                            matchesData[player] = await response.json();
+                        }
+                    } catch (e) {
+                        matchesData[player] = { error: 'Nessuna storia trovata' };
+                    }
+                }
+                
+                document.getElementById('matchesData').innerHTML = 
+                    `<pre>${formatJSON(matchesData)}</pre>`;
+            } catch (error) {
+                showError('matchesData', error);
+            }
+        }
+        
+        // Load cards data
+        async function loadCards() {
+            showLoading('cardsData');
+            try {
+                const response = await fetch(`${API_BASE}/cards/cards`);
+                const data = await response.json();
+                
+                // Show summary and full data
+                const summary = {
+                    total_cards: data.cards ? data.cards.length : 0,
+                    suits: {},
+                    sample_cards: data.cards ? data.cards.slice(0, 5) : []
+                };
+                
+                if (data.cards) {
+                    data.cards.forEach(card => {
+                        if (!summary.suits[card.suit]) {
+                            summary.suits[card.suit] = 0;
+                        }
+                        summary.suits[card.suit]++;
+                    });
+                }
+                
+                const displayData = {
+                    summary: summary,
+                    all_cards: data.cards
+                };
+                
+                document.getElementById('cardsData').innerHTML = 
+                    `<pre>${formatJSON(displayData)}</pre>`;
+            } catch (error) {
+                showError('cardsData', error);
+            }
+        }
+        
+        // Load system statistics
+        async function loadStats() {
+            const statsContainer = document.getElementById('statsContainer');
+            statsContainer.innerHTML = '<div class="loading">Calcolo statistiche...</div>';
+            
+            try {
+                let stats = {
+                    players: 0,
+                    matches: 0,
+                    cards: 0,
+                    services: {}
+                };
+                
+                // Test each service
+                const services = [
+                    { name: 'API Gateway', endpoint: '/health' },
+                    { name: 'Auth Service', endpoint: '/auth/health' },
+                    { name: 'Cards Service', endpoint: '/cards/health' },
+                    { name: 'Matches Service', endpoint: '/matches/health' },
+                    { name: 'Player Service', endpoint: '/players/health' },
+                    { name: 'History Service', endpoint: '/history/health' }
+                ];
+                
+                for (const service of services) {
+                    try {
+                        const response = await fetch(`${API_BASE}${service.endpoint}`);
+                        stats.services[service.name] = response.ok ? '✅ Online' : '❌ Offline';
+                    } catch (e) {
+                        stats.services[service.name] = '❌ Offline';
+                    }
+                }
+                
+                // Get player count from sample
+                try {
+                    const response = await fetch(`${API_BASE}/players/mario`);
+                    if (response.ok) {
+                        stats.players = 1; // At least one player exists
+                    }
+                } catch (e) {}
+                
+                // Get matches count
+                try {
+                    const response = await fetch(`${API_BASE}/history/mario`);
+                    const data = await response.json();
+                    stats.matches = data.match_count || 0;
+                } catch (e) {}
+                
+                // Get cards count
+                try {
+                    const response = await fetch(`${API_BASE}/cards/cards`);
+                    const data = await response.json();
+                    stats.cards = data.count || 0;
+                } catch (e) {}
+                
+                // Display stats as cards
+                statsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.players}</div>
+                        <div class="stat-label">Giocatori Registrati</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.matches}</div>
+                        <div class="stat-label">Partite Giocate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.cards}</div>
+                        <div class="stat-label">Carte nel Mazzo</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${Object.values(stats.services).filter(s => s === '✅ Online').length}/6</div>
+                        <div class="stat-label">Servizi Online</div>
+                    </div>
+                    <div class="stat-card" style="grid-column: 1 / -1;">
+                        <div class="stat-label">Stato Servizi:</div>
+                        <pre style="margin-top: 10px; font-size: 0.8em;">${formatJSON(stats.services)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                statsContainer.innerHTML = `<div class="error">Errore nel caricamento statistiche: ${error.message}</div>`;
+            }
+        }
+        
+        // Load all data
+        async function loadAllData() {
+            await loadPlayers();
+            await loadMatches();
+            await loadCards();
+            await loadStats();
+        }
+        
+        // Clear all displays
+        function clearAll() {
+            document.getElementById('playersData').innerHTML = '<div class="loading">Clicca "Carica Players" per visualizzare i dati...</div>';
+            document.getElementById('matchesData').innerHTML = '<div class="loading">Clicca "Carica Partite" per visualizzare i dati...</div>';
+            document.getElementById('cardsData').innerHTML = '<div class="loading">Clicca "Carica Carte" per visualizzare i dati...</div>';
+            document.getElementById('statsContainer').innerHTML = 'Le statistiche verranno caricate qui...';
+        }
+        
+        // Load all data on page load
+        window.onload = loadAllData;
     </script>
 </body>
 </html>
