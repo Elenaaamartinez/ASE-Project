@@ -316,26 +316,39 @@ def health():
 @app.route('/matches', methods=['POST'])
 def create_match():
     """Crea nuova partita"""
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "JSON data required"}), 400
+    try:
+        data = request.get_json()
+        print(f"DEBUG: Received data: {data}")  # Debug
+        
+        if not data:
+            return jsonify({"error": "JSON data required"}), 400
 
-    player1 = data.get('player1')
-    player2 = data.get('player2')
+        player1 = data.get('player1')
+        player2 = data.get('player2')
 
-    if not player1 or not player2:
-        return jsonify({"error": "Entrambi i giocatori richiesti"}), 400
+        if not player1 or not player2:
+            return jsonify({"error": "Entrambi i giocatori richiesti"}), 400
 
-    match_id = str(uuid.uuid4())
-    game = EscobaGame(match_id, player1, player2)
-    save_match(game)
+        match_id = str(uuid.uuid4())
+        print(f"DEBUG: Creating match {match_id} for players {player1} vs {player2}")
+        
+        game = EscobaGame(match_id, player1, player2)
+        save_match(game)
 
-    return jsonify({
-        "match_id": match_id,
-        "players": [player1, player2],
-        "message": "Partita creata con successo",
-        "initial_table": game.table_cards
-    }), 201
+        print(f"DEBUG: Match created successfully: {match_id}")
+
+        return jsonify({
+            "match_id": match_id,
+            "players": [player1, player2],
+            "message": "Partita creata con successo",
+            "initial_table": game.table_cards
+        }), 201
+
+    except Exception as e:
+        print(f"❌ Error creating match: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Errore nella creazione della partita: {str(e)}"}), 500
 
 @app.route('/matches/<match_id>', methods=['GET'])
 def get_match(match_id):
@@ -386,4 +399,5 @@ if __name__ == '__main__':
     print("🃏 La Escoba game logic loaded")
     print("🗄️  Redis storage enabled")
     app.run(host='0.0.0.0', port=5003, debug=True)
+
 
