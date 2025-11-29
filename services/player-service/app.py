@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import uuid
 import os
 import psycopg2
+import time
 from datetime import datetime
 from flask_cors import CORS  # AGGIUNGI
 
@@ -19,8 +20,8 @@ def get_db_connection():
     return conn
 
 def wait_for_db(max_retries=30, retry_interval=2):
-    """Wait for the database to be ready"""
-    print("Waiting for DB to be ready...")
+    """Wait for database to be ready"""
+    print("Waiting for database connection...")
     for i in range(max_retries):
         try:
             conn = psycopg2.connect(
@@ -32,27 +33,27 @@ def wait_for_db(max_retries=30, retry_interval=2):
                 connect_timeout=5
             )
             conn.close()
-            print("The conection to the DB is successful!")
+            print("Database connection successful")
             return True
         except psycopg2.OperationalError as e:
             if i < max_retries - 1:
-                print(f"DB is not ready, tring again... ({i+1}/{max_retries})")
+                print(f"Database not ready, retrying... ({i+1}/{max_retries})")
                 time.sleep(retry_interval)
             else:
-                print(f"DB is not reachable {e}")
+                print(f"Failed to connect to database: {e}")
                 return False
 
 def init_db():
-    """Initialize the database tables if they do not exist"""
+    """Initialize database tables"""
     if not wait_for_db():
-        print("BD can not be initialized")
+        print("Cannot initialize database")
         return False
     
     conn = get_db_connection()
     cur = conn.cursor()
     
     try:
-        # Table of players
+        # Create players table
         cur.execute('''
             CREATE TABLE IF NOT EXISTS players (
                 id SERIAL PRIMARY KEY,
@@ -63,7 +64,7 @@ def init_db():
             )
         ''')
         
-        # Table of player statistics
+        # Create player_stats table
         cur.execute('''
             CREATE TABLE IF NOT EXISTS player_stats (
                 username VARCHAR(50) PRIMARY KEY,
@@ -78,11 +79,11 @@ def init_db():
         ''')
         
         conn.commit()
-        print("DB table created successfully")
+        print("Player database tables created successfully")
         return True
         
     except Exception as e:
-        print(f"Error creating table: {e}")
+        print(f"Error creating database tables: {e}")
         conn.rollback()
         return False
     finally:

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import psycopg2
 import os
+import json
 from flask_cors import CORS  # AGGIUNGI
 
 app = Flask(__name__)
