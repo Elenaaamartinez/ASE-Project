@@ -18,6 +18,78 @@ def get_db_connection():
     )
     return conn
 
+def wait_for_db(max_retries=30, retry_interval=2):
+    """Wait for the database to be ready"""
+    print("Waiting for DB to be ready...")
+    for i in range(max_retries):
+        try:
+            conn = psycopg2.connect(
+                host=os.environ.get('DB_HOST', 'player-db'),
+                database=os.environ.get('DB_NAME', 'player_db'),
+                user=os.environ.get('DB_USER', 'user'),
+                password=os.environ.get('DB_PASSWORD', 'password'),
+                port=os.environ.get('DB_PORT', '5432'),
+                connect_timeout=5
+            )
+            conn.close()
+            print("The conection to the DB is successful!")
+            return True
+        except psycopg2.OperationalError as e:
+            if i < max_retries - 1:
+                print(f"DB is not ready, tring again... ({i+1}/{max_retries})")
+                time.sleep(retry_interval)
+            else:
+                print(f"DB is not reachable {e}")
+                return False
+
+def init_db():
+    """Initialize the database tables if they do not exist"""
+    if not wait_for_db():
+        print("BD can not be initialized")
+        return False
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Table of players
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS players (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                player_id UUID NOT NULL,
+                email VARCHAR(100),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Table of player statistics
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS player_stats (
+                username VARCHAR(50) PRIMARY KEY,
+                total_score INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1,
+                matches_played INTEGER DEFAULT 0,
+                matches_won INTEGER DEFAULT 0,
+                matches_lost INTEGER DEFAULT 0,
+                win_rate FLOAT DEFAULT 0.0,
+                FOREIGN KEY (username) REFERENCES players(username)
+            )
+        ''')
+        
+        conn.commit()
+        print("DB table created successfully")
+        return True
+        
+    except Exception as e:
+        print(f"Error creating table: {e}")
+        conn.rollback()
+        return False
+    finally:
+        cur.close()
+        conn.close()
+
+
 def ensure_player_exists(username, email=None):
     """Insert player and stats if not exist (idempotent)"""
     conn = get_db_connection()
@@ -170,6 +242,11 @@ def health():
         }), 503
 
 if __name__ == '__main__':
-    print("✅ Player service starting on port 5004...")
-    app.run(host='0.0.0.0', port=5004, debug=True)
-
+    print("Strat of Player Service...")
+    print("Start of BD...")
+    if init_db():
+        print("BD initialized successfully")
+        print("Player service in port 5004...")
+        app.run(host='0.0.0.0', port=5004, debug=True)
+    else:
+        print("Failed to initialize BD")
