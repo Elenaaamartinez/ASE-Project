@@ -57,21 +57,45 @@ class GameManager {
     }
 
     async createGame(player1, player2) {
-        try {
-            Utils.showNotification('Creazione partita in corso...', 'info');
-            const result = await EscobaAPI.createMatch(player1, player2);
-            this.currentMatch = result.match_id;
-            this.playerName = player1;
-            this.opponentName = player2;
-            
-            Utils.showNotification('Partita creata con successo!', 'success');
-            this.showGameInterface();
-            return result;
-        } catch (error) {
-            console.error('Error creating game:', error);
-            Utils.showNotification('Errore nella creazione della partita: ' + error.message, 'error');
+    try {
+        Utils.showNotification('Creazione partita in corso...', 'info');
+        console.log(`Creating game: ${player1} vs ${player2}`);
+        
+        const result = await EscobaAPI.createMatch(player1, player2);
+        console.log('Create game response:', result);
+        
+        if (result.error) {
+            throw new Error(result.error);
         }
+        
+        if (!result.match_id) {
+            throw new Error('Nessun ID partita ricevuto dal server');
+        }
+        
+        this.currentMatch = result.match_id;
+        this.playerName = player1;
+        this.opponentName = player2;
+        
+        Utils.showNotification('Partita creata con successo!', 'success');
+        this.showGameInterface();
+        return result;
+        
+    } catch (error) {
+        console.error('Error creating game:', error);
+        let errorMessage = 'Errore nella creazione della partita: ';
+        
+        if (error.message.includes('Failed to fetch')) {
+            errorMessage += 'Errore di connessione al server';
+        } else if (error.message.includes('player2')) {
+            errorMessage += 'Giocatore 2 non trovato. Assicurati che esista.';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        Utils.showNotification(errorMessage, 'error');
+        return null;
     }
+}
 
     async joinGame(matchId, player) {
         try {
