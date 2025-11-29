@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Database Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .database-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .refresh-btn { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Database Viewer - La Escoba</h1>
+
+    <div class="database-section">
+        <h2>👥 Players Database</h2>
+        <button class="refresh-btn" onclick="loadPlayers()">Aggiorna Players</button>
+        <div id="playersData"></div>
+    </div>
+
+    <div class="database-section">
+        <h2>🎮 Matches Database</h2>
+        <button class="refresh-btn" onclick="loadMatches()">Aggiorna Partite</button>
+        <div id="matchesData"></div>
+    </div>
+
+    <div class="database-section">
+        <h2>🃏 Cards Database</h2>
+        <button class="refresh-btn" onclick="loadCards()">Aggiorna Carte</button>
+        <div id="cardsData"></div>
+    </div>
+
+    <div class="database-section">
+        <h2>📊 Player Stats</h2>
+        <button class="refresh-btn" onclick="loadPlayerStats()">Aggiorna Statistiche</button>
+        <div id="playerStatsData"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        async function loadPlayers() {
+            try {
+                const response = await fetch(`${API_BASE}/players/mario`);
+                const data = await response.json();
+                document.getElementById('playersData').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('playersData').innerHTML = 
+                    `<p style="color: red;">Errore: ${error.message}</p>`;
+            }
+        }
+
+        async function loadMatches() {
+            try {
+                const response = await fetch(`${API_BASE}/history/mario`);
+                const data = await response.json();
+                document.getElementById('matchesData').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('matchesData').innerHTML = 
+                    `<p style="color: red;">Errore: ${error.message}</p>`;
+            }
+        }
+
+        async function loadCards() {
+            try {
+                const response = await fetch(`${API_BASE}/cards/cards`);
+                const data = await response.json();
+                document.getElementById('cardsData').innerHTML = 
+                    `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('cardsData').innerHTML = 
+                    `<p style="color: red;">Errore: ${error.message}</p>`;
+            }
+        }
+
+        async function loadPlayerStats() {
+            try {
+                // Carica diversi giocatori per vedere le statistiche
+                const players = ['mario', 'luigi'];
+                let allStats = {};
+                
+                for (const player of players) {
+                    try {
+                        const response = await fetch(`${API_BASE}/players/${player}`);
+                        allStats[player] = await response.json();
+                    } catch (e) {
+                        allStats[player] = { error: e.message };
+                    }
+                }
+                
+                document.getElementById('playerStatsData').innerHTML = 
+                    `<pre>${JSON.stringify(allStats, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('playerStatsData').innerHTML = 
+                    `<p style="color: red;">Errore: ${error.message}</p>`;
+            }
+        }
+
+        // Carica tutto all'avvio
+        window.onload = function() {
+            loadPlayers();
+            loadMatches();
+            loadCards();
+            loadPlayerStats();
+        };
+    </script>
+</body>
+</html>
