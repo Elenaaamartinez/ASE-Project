@@ -157,7 +157,7 @@ services:
     environment:
       - AUTH_SERVICE_URL=http://auth-service:5001
       - CARDS_SERVICE_URL=http://cards-service:5002
-      - MATCHES_SERVICE_URL=http://matches-service:5003
+      - MATCH_SERVICE_URL=http://match-service:5003
       - PLAYER_SERVICE_URL=http://player-service:5004
       - HISTORY_SERVICE_URL=http://history-service:5005
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production-2025
