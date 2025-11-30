@@ -1,22 +1,19 @@
-FROM node:18-alpine
+FROM python:3.9-slim
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy frontend source code
+# Copy frontend files
 COPY . .
+
+# Install Python dependencies for the simple HTTP server
+RUN pip install --no-cache-dir flask
 
 # Expose port
 EXPOSE 8080
 
-# Health check for frontend
+# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD node -e "const http = require('http'); const req = http.request({host: 'localhost', port: 8080, method: 'GET'}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080')" || exit 1
 
-# Start the server
-CMD ["npm", "start"]
+# Start the Python server
+CMD ["python", "server.py"]
