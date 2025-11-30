@@ -36,7 +36,7 @@
                         <p class="hero-subtitle">The classic Spanish card game. Challenging, strategic, and addictive.</p>
                         <div class="hero-buttons">
                             <button class="btn btn-lg btn-primary" onclick="document.getElementById('loginBtn').click()">Play Now</button>
-                            <button class="btn btn-lg btn-outline" onclick="document.getElementById('rulesSection').scrollIntoView({behavior: 'smooth'})">View Rules</button>
+                            <button class="btn btn-lg btn-outline" onclick="showRules()">View Rules</button>
                         </div>
                     </div>
 
@@ -67,34 +67,22 @@
                         <h3>The Spanish Deck</h3>
                         <div class="suits-grid">
                             <div class="suit-group">
-                                <!-- Replaced Unicode symbol with actual Coins image -->
-                                <div class="suit-icon oros">
-                                    <img src="/images/captura-20desde-202025-11-30-2012-49-00.png" alt="Coins" class="card-suit-img">
-                                </div>
+                                <div class="suit-icon oros">♦</div>
                                 <p>Coins</p>
                                 <span>Value: 1-12</span>
                             </div>
                             <div class="suit-group">
-                                <!-- Replaced Unicode symbol with actual Cups image -->
-                                <div class="suit-icon copas">
-                                    <img src="/images/captura-20desde-202025-11-30-2012-49-36.png" alt="Cups" class="card-suit-img">
-                                </div>
+                                <div class="suit-icon copas">♥</div>
                                 <p>Cups</p>
                                 <span>Value: 1-12</span>
                             </div>
                             <div class="suit-group">
-                                <!-- Replaced Unicode symbol with actual Swords image -->
-                                <div class="suit-icon espadas">
-                                    <img src="/images/captura-20desde-202025-11-30-2012-49-14.png" alt="Swords" class="card-suit-img">
-                                </div>
+                                <div class="suit-icon espadas">♠</div>
                                 <p>Swords</p>
                                 <span>Value: 1-12</span>
                             </div>
                             <div class="suit-group">
-                                <!-- Replaced Unicode symbol with actual Clubs image -->
-                                <div class="suit-icon bastos">
-                                    <img src="/images/captura-20desde-202025-11-30-2012-49-46.png" alt="Clubs" class="card-suit-img">
-                                </div>
+                                <div class="suit-icon bastos">♣</div>
                                 <p>Clubs</p>
                                 <span>Value: 1-12</span>
                             </div>
@@ -129,7 +117,7 @@
                     </section>
 
                     <!-- Rules Section -->
-                    <section id="rulesSection" class="rules-section">
+                    <section id="rulesSection" class="rules-section" style="display:none">
                         <h3>Main Rules</h3>
                         <div class="rules-container">
                             <div class="rule-item">
@@ -157,80 +145,10 @@
                 </div>
             </section>
 
-            <!-- Auth Section (Login/Register) -->
-            <section id="authSection" class="section" style="display:none">
-                <div class="auth-container">
-                    <div id="loginForm" class="form-container active">
-                        <h3>Login</h3>
-                        <input type="text" id="loginUsername" placeholder="Username" class="input">
-                        <input type="password" id="loginPassword" placeholder="Password" class="input">
-                        <button onclick="handleLogin()" class="btn btn-primary">Login</button>
-                        <p>Don't have an account? <a onclick="switchToRegister()" href="#">Sign up here</a></p>
-                    </div>
-
-                    <div id="registerForm" class="form-container">
-                        <h3>Sign Up</h3>
-                        <input type="text" id="registerUsername" placeholder="Username" class="input">
-                        <input type="email" id="registerEmail" placeholder="Email" class="input">
-                        <input type="password" id="registerPassword" placeholder="Password" class="input">
-                        <input type="password" id="registerConfirm" placeholder="Confirm Password" class="input">
-                        <button onclick="handleRegister()" class="btn btn-success">Sign Up</button>
-                        <p>Already have an account? <a onclick="switchToLogin()" href="#">Login here</a></p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Game Section -->
+            <!-- Game Interface (dynamically loaded) -->
             <section id="gameSection" class="section" style="display:none">
-                <div class="game-container">
-                    <div class="game-header">
-                        <h3>Game in Progress</h3>
-                        <button class="btn btn-outline" onclick="authManager.showMainScreen()">← Back</button>
-                    </div>
-                    <div class="game-board">
-                        <div class="board-section">
-                            <h4>Cards on Table</h4>
-                            <div class="cards-row" id="boardCards"></div>
-                        </div>
-                        
-                        <div class="board-section">
-                            <h4>Your Cards</h4>
-                            <div class="cards-row" id="playerCards"></div>
-                        </div>
-
-                        <div class="game-actions">
-                            <button onclick="playCard()" class="btn btn-success">Play Card</button>
-                            <button onclick="endTurn()" class="btn btn-info">Pass Turn</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Profile Section -->
-            <section id="profileSection" class="section" style="display:none">
-                <div class="profile-container">
-                    <div class="game-header">
-                        <h3>Player Profile</h3>
-                        <button class="btn btn-outline" onclick="authManager.showMainScreen()">← Back</button>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-label">Total Score</span>
-                            <span class="stat-value" id="totalScore">0</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Matches Played</span>
-                            <span class="stat-value" id="matchesPlayed">0</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Matches Won</span>
-                            <span class="stat-value" id="matchesWon">0</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Win Rate</span>
-                            <span class="stat-value" id="winRate">0%</span>
-                        </div>
-                    </div>
+                <div class="game-container" id="gameContainer">
+                    <!-- Game content loaded by JavaScript -->
                 </div>
             </section>
         </main>
@@ -245,9 +163,8 @@
                 <div class="footer-section">
                     <h4>Links</h4>
                     <ul>
-                        <li><a href="#">About Us</a></li>
-                        <li><a href="#">Contact</a></li>
-                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#" onclick="showRules()">Game Rules</a></li>
+                        <li><a href="#" onclick="showAbout()">About</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -258,9 +175,30 @@
         </footer>
     </div>
 
+    <!-- JavaScript Files -->
     <script src="js/api.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/database-viewer.js"></script>
+    
+    <script>
+        // Simple utility functions for the frontend
+        function showRules() {
+            document.getElementById('rulesSection').style.display = 'block';
+            document.getElementById('rulesSection').scrollIntoView({behavior: 'smooth'});
+        }
+
+        function showAbout() {
+            alert('La Escoba - Advanced Software Engineering Project 2025\n\nA microservices-based implementation of the classic Spanish card game.');
+        }
+
+        // Initialize auth manager when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof authManager !== 'undefined') {
+                authManager.updateUI();
+            }
+        });
+    </script>
 </body>
 </html>
