@@ -1,145 +1,7 @@
 version: '3.8'
 
 services:
-  # API Gateway
-  api-gateway:
-    build: ./services/api-gateway
-    ports:
-      - "5000:5000"
-    environment:
-      - AUTH_SERVICE_URL=http://auth-service:5001
-      - CARDS_SERVICE_URL=http://cards-service:5002
-      - MATCHES_SERVICE_URL=http://matches-service:5003
-      - PLAYER_SERVICE_URL=http://player-service:5004
-      - HISTORY_SERVICE_URL=http://history-service:5005
-    depends_on:
-      - auth-service
-      - cards-service
-      - match-service
-      - player-service
-      - history-service
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Auth Service
-  auth-service:
-    build: ./services/auth-service
-    ports:
-      - "5001:5001"
-    environment:
-      - DB_HOST=auth-db
-      - DB_NAME=auth_db
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
-    depends_on:
-      auth-db:
-        condition: service_healthy
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Cards Service
-  cards-service:
-    build: ./services/cards-service
-    ports:
-      - "5002:5002"
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Match Service
-  match-service:
-    build: ./services/match-service
-    ports:
-      - "5003:5003"
-    environment:
-      - REDIS_HOST=match-db
-      - REDIS_PORT=6379
-    depends_on:
-      match-db:
-        condition: service_healthy
-      history-service:
-        condition: service_healthy
-      player-service:
-        condition: service_healthy
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Player Service
-  player-service:
-    build: ./services/player-service
-    ports:
-      - "5004:5004"
-    environment:
-      - DB_HOST=player-db
-      - DB_NAME=player_db
-      - DB_USER=user
-      - DB_PASSWORD=password
-    depends_on:
-      player-db:
-        condition: service_healthy
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # History Service
-  history-service:
-    build: ./services/history-service
-    ports:
-      - "5005:5005"
-    environment:
-      - DB_HOST=history-db
-      - DB_NAME=history_db
-      - DB_USER=user
-      - DB_PASSWORD=password
-    depends_on:
-      history-db:
-        condition: service_healthy
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Frontend
-  frontend:
-    build: ./frontend
-    ports:
-      - "8080:8080"
-    networks:
-      - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Databases
+  # Databases - Start these first
   auth-db:
     image: postgres:13
     environment:
@@ -220,6 +82,152 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Auth Service
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "5001:5001"
+    environment:
+      - DB_HOST=auth-db
+      - DB_NAME=auth_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Cards Service
+  cards-service:
+    build: ./services/cards-service
+    ports:
+      - "5002:5002"
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Match Service
+  match-service:
+    build: ./services/match-service
+    ports:
+      - "5003:5003"
+    environment:
+      - REDIS_HOST=match-db
+      - REDIS_PORT=6379
+    depends_on:
+      match-db:
+        condition: service_healthy
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Player Service
+  player-service:
+    build: ./services/player-service
+    ports:
+      - "5004:5004"
+    environment:
+      - DB_HOST=player-db
+      - DB_NAME=player_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+    depends_on:
+      player-db:
+        condition: service_healthy
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # History Service
+  history-service:
+    build: ./services/history-service
+    ports:
+      - "5005:5005"
+    environment:
+      - DB_HOST=history-db
+      - DB_NAME=history_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+    depends_on:
+      history-db:
+        condition: service_healthy
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # API Gateway
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - CARDS_SERVICE_URL=http://cards-service:5002
+      - MATCHES_SERVICE_URL=http://matches-service:5003
+      - PLAYER_SERVICE_URL=http://player-service:5004
+      - HISTORY_SERVICE_URL=http://history-service:5005
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production-2025
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      cards-service:
+        condition: service_healthy
+      match-service:
+        condition: service_healthy
+      player-service:
+        condition: service_healthy
+      history-service:
+        condition: service_healthy
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    networks:
+      - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   auth_data:
