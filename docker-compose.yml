@@ -1,77 +1,74 @@
 version: '3.8'
 
 services:
-  ###########################################################################
-  # DATABASES
-  ###########################################################################
-
+  # Databases
   auth-db:
     image: postgres:13
     environment:
-      POSTGRES_DB: ${AUTH_DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=auth_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
       - auth_data:/var/lib/postgresql/data
       - ./databases/init-scripts/auth-init.sql:/docker-entrypoint-initdb.d/01-auth-init.sql
     networks:
       - escoba-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${AUTH_DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U user -d auth_db"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
   player-db:
     image: postgres:13
     environment:
-      POSTGRES_DB: ${PLAYER_DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=player_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
       - player_data:/var/lib/postgresql/data
       - ./databases/init-scripts/player-init.sql:/docker-entrypoint-initdb.d/01-player-init.sql
     networks:
       - escoba-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${PLAYER_DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U user -d player_db"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
   cards-db:
     image: postgres:13
     environment:
-      POSTGRES_DB: ${CARDS_DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=cards_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
       - cards_data:/var/lib/postgresql/data
       - ./databases/init-scripts/cards-init.sql:/docker-entrypoint-initdb.d/01-cards-init.sql
     networks:
       - escoba-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${CARDS_DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U user -d cards_db"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
   history-db:
     image: postgres:13
     environment:
-      POSTGRES_DB: ${HISTORY_DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      - POSTGRES_DB=history_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
     volumes:
       - history_data:/var/lib/postgresql/data
       - ./databases/init-scripts/history-init.sql:/docker-entrypoint-initdb.d/01-history-init.sql
     networks:
       - escoba-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${HISTORY_DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U user -d history_db"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
   match-db:
     image: redis:7-alpine
@@ -84,18 +81,19 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
 
-  ###########################################################################
-  # MICROSERVICES
-  ###########################################################################
-
+  # Microservices
   auth-service:
     build: ./services/auth-service
     ports:
       - "5001:5001"
-    env_file:
-      - .env
+    environment:
+      - DB_HOST=auth-db
+      - DB_NAME=auth_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
     depends_on:
       auth-db:
         condition: service_healthy
@@ -106,11 +104,6 @@ services:
     build: ./services/cards-service
     ports:
       - "5002:5002"
-    env_file:
-      - .env
-    depends_on:
-      cards-db:
-        condition: service_healthy
     networks:
       - escoba-network
 
@@ -118,15 +111,11 @@ services:
     build: ./services/match-service
     ports:
       - "5003:5003"
-    env_file:
-      - .env
     environment:
       - REDIS_HOST=match-db
       - REDIS_PORT=6379
     depends_on:
       match-db:
-        condition: service_healthy
-      history-service:
         condition: service_healthy
     networks:
       - escoba-network
@@ -135,8 +124,11 @@ services:
     build: ./services/player-service
     ports:
       - "5004:5004"
-    env_file:
-      - .env
+    environment:
+      - DB_HOST=player-db
+      - DB_NAME=player_db
+      - DB_USER=user
+      - DB_PASSWORD=password
     depends_on:
       player-db:
         condition: service_healthy
@@ -147,30 +139,28 @@ services:
     build: ./services/history-service
     ports:
       - "5005:5005"
-    env_file:
-      - .env
+    environment:
+      - DB_HOST=history-db
+      - DB_NAME=history_db
+      - DB_USER=user
+      - DB_PASSWORD=password
     depends_on:
       history-db:
         condition: service_healthy
     networks:
       - escoba-network
 
-  ###########################################################################
-  # API GATEWAY
-  ###########################################################################
-
   api-gateway:
     build: ./services/api-gateway
     ports:
       - "5000:5000"
-    env_file:
-      - .env
     environment:
       - AUTH_SERVICE_URL=http://auth-service:5001
-      - PLAYER_SERVICE_URL=http://player-service:5004
-      - MATCH_SERVICE_URL=http://match-service:5003
       - CARDS_SERVICE_URL=http://cards-service:5002
+      - MATCH_SERVICE_URL=http://match-service:5003
+      - PLAYER_SERVICE_URL=http://player-service:5004
       - HISTORY_SERVICE_URL=http://history-service:5005
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production-2025
     depends_on:
       - auth-service
       - cards-service
@@ -180,20 +170,12 @@ services:
     networks:
       - escoba-network
 
-  ###########################################################################
-  # FRONTEND
-  ###########################################################################
-
   frontend:
     build: ./frontend
     ports:
       - "8080:8080"
     networks:
       - escoba-network
-
-###########################################################################
-# VOLUMES
-###########################################################################
 
 volumes:
   auth_data:
@@ -202,10 +184,28 @@ volumes:
   history_data:
   redis_data:
 
-###########################################################################
-# NETWORKS
-###########################################################################
-
 networks:
   escoba-network:
     driver: bridge
+
+
+
+ASE-Project/databases/init-scripts/auth-init.sql
+-- Inizializzazione Auth Database
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE,
+    password_hash BYTEA NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    account_status VARCHAR(20) DEFAULT 'active'
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id UUID PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (username) REFERENCES users(username)
+);
