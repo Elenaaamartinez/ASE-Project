@@ -8,10 +8,10 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# Service URLs
+# Service URLs - CORRETTI: match-service invece di matches-service
 AUTH_SERVICE_URL = "http://auth-service:5001"
 CARDS_SERVICE_URL = "http://cards-service:5002"
-MATCHES_SERVICE_URL = "http://matches-service:5003"
+MATCH_SERVICE_URL = "http://match-service:5003"  # CAMBIATO
 PLAYER_SERVICE_URL = "http://player-service:5004"
 HISTORY_SERVICE_URL = "http://history-service:5005"
 
@@ -109,7 +109,7 @@ def health():
     services = [
         ('Auth Service', AUTH_SERVICE_URL, '/health'),
         ('Cards Service', CARDS_SERVICE_URL, '/health'),
-        ('Matches Service', MATCHES_SERVICE_URL, '/health'),
+        ('Match Service', MATCH_SERVICE_URL, '/health'),  # CAMBIATO
         ('Player Service', PLAYER_SERVICE_URL, '/health'),
         ('History Service', HISTORY_SERVICE_URL, '/health')
     ]
@@ -187,30 +187,30 @@ def cards_deck():
 def cards_health():
     return forward_request(CARDS_SERVICE_URL, "health", "GET")
 
-# Matches routes
-@app.route('/matches/matches', methods=['POST'])
-def matches_create():
-    return forward_request(MATCHES_SERVICE_URL, "matches", "POST")
+# Match routes - TUTTI CAMBIATI: /match/ invece di /matches/
+@app.route('/match/match', methods=['POST'])
+def match_create():
+    return forward_request(MATCH_SERVICE_URL, "match", "POST")
 
-@app.route('/matches/matches', methods=['GET'])
-def matches_list():
-    return forward_request(MATCHES_SERVICE_URL, "matches", "GET")
+@app.route('/match/match', methods=['GET'])
+def match_list():
+    return forward_request(MATCH_SERVICE_URL, "match", "GET")
 
-@app.route('/matches/matches/<match_id>', methods=['GET'])
-def matches_get(match_id):
-    return forward_request(MATCHES_SERVICE_URL, f"matches/{match_id}", "GET")
+@app.route('/match/match/<match_id>', methods=['GET'])
+def match_get(match_id):
+    return forward_request(MATCH_SERVICE_URL, f"match/{match_id}", "GET")
 
-@app.route('/matches/matches/<match_id>/play', methods=['POST'])
-def matches_play(match_id):
-    return forward_request(MATCHES_SERVICE_URL, f"matches/{match_id}/play", "POST")
+@app.route('/match/match/<match_id>/play', methods=['POST'])
+def match_play(match_id):
+    return forward_request(MATCH_SERVICE_URL, f"match/{match_id}/play", "POST")
 
-@app.route('/matches/matches/<match_id>', methods=['DELETE'])
-def matches_delete(match_id):
-    return forward_request(MATCHES_SERVICE_URL, f"matches/{match_id}", "DELETE")
+@app.route('/match/match/<match_id>', methods=['DELETE'])
+def match_delete(match_id):
+    return forward_request(MATCH_SERVICE_URL, f"match/{match_id}", "DELETE")
 
-@app.route('/matches/health', methods=['GET'])
-def matches_health():
-    return forward_request(MATCHES_SERVICE_URL, "health", "GET")
+@app.route('/match/health', methods=['GET'])
+def match_health():
+    return forward_request(MATCH_SERVICE_URL, "health", "GET")
 
 # Player routes
 @app.route('/players/<username>', methods=['GET'])
@@ -242,17 +242,17 @@ def history_get(username):
 def history_stats(username):
     return forward_request(HISTORY_SERVICE_URL, f"stats/{username}", "GET")
 
-@app.route('/history/matches', methods=['POST'])
+@app.route('/history/match', methods=['POST'])
 def history_save():
-    return forward_request(HISTORY_SERVICE_URL, "history/matches", "POST")
+    return forward_request(HISTORY_SERVICE_URL, "history/match", "POST")
 
-@app.route('/history/matches/<match_id>', methods=['GET'])
+@app.route('/history/match/<match_id>', methods=['GET'])
 def history_match_details(match_id):
-    return forward_request(HISTORY_SERVICE_URL, f"history/matches/{match_id}", "GET")
+    return forward_request(HISTORY_SERVICE_URL, f"history/match/{match_id}", "GET")
 
-@app.route('/history/matches/<match_id>', methods=['DELETE'])
+@app.route('/history/match/<match_id>', methods=['DELETE'])
 def history_delete_match(match_id):
-    return forward_request(HISTORY_SERVICE_URL, f"history/matches/{match_id}", "DELETE")
+    return forward_request(HISTORY_SERVICE_URL, f"history/match/{match_id}", "DELETE")
 
 @app.route('/history/health', methods=['GET'])
 def history_health():
