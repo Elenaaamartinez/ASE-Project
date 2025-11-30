@@ -5,12 +5,11 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 
+# Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install dependencies including curl for health checks
-RUN apt-get update && apt-get install -y curl && \
-    pip install --no-cache-dir -r requirements.txt && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install Python dependencies only
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -25,8 +24,8 @@ USER appuser
 # Expose port
 EXPOSE 5002
 
-# Health check with longer start period
+# Health check using Python instead of curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:5002/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5002/health')" || exit 1
 
 CMD ["python", "app.py"]
