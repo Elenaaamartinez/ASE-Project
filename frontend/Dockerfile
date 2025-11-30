@@ -1,12 +1,19 @@
-FROM node:18-alpine
+FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
-
+# Copy frontend files
 COPY . .
 
+# Install Python dependencies for the simple HTTP server
+RUN pip install --no-cache-dir flask
+
+# Expose port
 EXPOSE 8080
 
-CMD ["npm", "run", "serve"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8080')" || exit 1
+
+# Start the Python server
+CMD ["python", "server.py"]
