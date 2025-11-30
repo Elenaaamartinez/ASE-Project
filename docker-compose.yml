@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Databases - Start these first
+  # Databases
   auth-db:
     image: postgres:13
     environment:
@@ -83,7 +83,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Auth Service
+  # Microservices
   auth-service:
     build: ./services/auth-service
     ports:
@@ -99,28 +99,14 @@ services:
         condition: service_healthy
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
-  # Cards Service
   cards-service:
     build: ./services/cards-service
     ports:
       - "5002:5002"
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
-  # Match Service
   match-service:
     build: ./services/match-service
     ports:
@@ -133,14 +119,7 @@ services:
         condition: service_healthy
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
-  # Player Service
   player-service:
     build: ./services/player-service
     ports:
@@ -155,14 +134,7 @@ services:
         condition: service_healthy
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
-  # History Service
   history-service:
     build: ./services/history-service
     ports:
@@ -177,14 +149,7 @@ services:
         condition: service_healthy
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
 
-  # API Gateway
   api-gateway:
     build: ./services/api-gateway
     ports:
@@ -197,37 +162,20 @@ services:
       - HISTORY_SERVICE_URL=http://history-service:5005
       - JWT_SECRET=your-super-secret-jwt-key-change-in-production-2025
     depends_on:
-      auth-service:
-        condition: service_healthy
-      cards-service:
-        condition: service_healthy
-      match-service:
-        condition: service_healthy
-      player-service:
-        condition: service_healthy
-      history-service:
-        condition: service_healthy
+      - auth-service
+      - cards-service
+      - match-service
+      - player-service
+      - history-service
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 90s
 
-  # Frontend
   frontend:
     build: ./frontend
     ports:
       - "8080:8080"
     networks:
       - escoba-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   auth_data:
