@@ -2,14 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copia i file del frontend
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy frontend source code
 COPY . .
 
-# Installa http-server globalmente
-RUN npm install -g http-server
-
-# Esponi la porta
+# Expose port
 EXPOSE 8080
 
-# Avvia il server
-CMD ["http-server", "-p", "8080", "-c-1", "--cors"]
+# Health check for frontend
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD node -e "const http = require('http'); const req = http.request({host: 'localhost', port: 8080, method: 'GET'}, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.end();"
+
+# Start the server
+CMD ["npm", "start"]
