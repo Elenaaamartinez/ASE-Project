@@ -7,10 +7,11 @@ import bcrypt
 import psycopg2
 import os
 import time
-from flask_cors import CORS  # AGGIUNGI QUESTO
+from flask_cors import CORS
+import re
 
 app = Flask(__name__)
-CORS(app)  # AGGIUNGI QUESTO PER IL FRONTEND
+CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-super-secret-jwt-key-change-in-production-2025')
 
 # Database connection with retry logic
@@ -94,6 +95,41 @@ def init_db():
         cur.close()
         conn.close()
 
+def validate_input(data):
+    """Validate and sanitize user input"""
+    errors = []
+    
+    # Validate username
+    username = data.get('username', '').strip()
+    if not username:
+        errors.append("Username is required")
+    elif len(username) < 3:
+        errors.append("Username must be at least 3 characters")
+    elif len(username) > 50:
+        errors.append("Username must be less than 50 characters")
+    elif not re.match(r'^[a-zA-Z0-9_]+$', username):
+        errors.append("Username can only contain letters, numbers and underscores")
+    
+    # Validate password
+    password = data.get('password', '')
+    if not password:
+        errors.append("Password is required")
+    elif len(password) < 8:
+        errors.append("Password must be at least 8 characters")
+    elif not any(c.isupper() for c in password):
+        errors.append("Password must contain at least one uppercase letter")
+    elif not any(c.islower() for c in password):
+        errors.append("Password must contain at least one lowercase letter")
+    elif not any(c.isdigit() for c in password):
+        errors.append("Password must contain at least one number")
+    
+    # Validate email if provided
+    email = data.get('email', '').strip()
+    if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+        errors.append("Invalid email format")
+    
+    return errors
+
 def create_player_in_player_service(username, email=None):
     """Create player profile in Player Service when user registers"""
     try:
@@ -117,19 +153,20 @@ def create_player_in_player_service(username, email=None):
 
 @app.route('/register', methods=['POST'])
 def register():
-    """Register a new user with password hashing"""
+    """Register a new user with password hashing and input validation"""
     data = request.get_json()
 
-    if not data or not data.get('username') or not data.get('password'):
-        return jsonify({"error": "Username and password required"}), 400
+    if not data:
+        return jsonify({"error": "JSON data required"}), 400
 
-    username = data['username']
+    # Validate input
+    validation_errors = validate_input(data)
+    if validation_errors:
+        return jsonify({"error": "Validation failed", "details": validation_errors}), 400
+
+    username = data['username'].strip()
     password = data['password']
-    email = data.get('email')
-
-    # Validate password strength
-    if len(password) < 6:
-        return jsonify({"error": "Password must be at least 6 characters"}), 400
+    email = data.get('email', '').strip()
 
     try:
         conn = get_db_connection()
@@ -142,12 +179,12 @@ def register():
             conn.close()
             return jsonify({"error": "Username already exists"}), 400
 
-        # Hash password - USIAMO LA VERSIONE SICURA
-        print(f"DEBUG: Hashing password for user: {username}")
+        # Hash password with bcrypt
+        print(f"🔒 Hashing password for user: {username}")
         salt = bcrypt.gensalt()
         password_hash = bcrypt.hashpw(password.encode('utf-8'), salt)
         
-        print(f"DEBUG: Generated hash type: {type(password_hash)}, length: {len(password_hash)}")
+        print(f"🔒 Generated hash successfully for {username}")
 
         # Insert new user
         cur.execute(
@@ -178,14 +215,17 @@ def register():
 
 @app.route('/login', methods=['POST'])
 def login():
-    """Login user and return JWT token"""
+    """Login user and return JWT token with input validation"""
     data = request.get_json()
 
-    if not data or not data.get('username') or not data.get('password'):
-        return jsonify({"error": "Username and password required"}), 400
+    if not data:
+        return jsonify({"error": "JSON data required"}), 400
 
-    username = data['username']
-    password = data['password']
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
 
     try:
         conn = get_db_connection()
@@ -205,10 +245,7 @@ def login():
 
         stored_username, stored_hash = user
 
-        # DEBUG: Verifica il tipo di stored_hash
-        print(f"DEBUG: Type of stored_hash: {type(stored_hash)}")
-        
-        # Converti stored_hash in bytes se necessario
+        # Convert stored_hash to bytes for bcrypt
         if isinstance(stored_hash, memoryview):
             stored_hash = stored_hash.tobytes()
         elif isinstance(stored_hash, str):
@@ -216,20 +253,18 @@ def login():
         elif hasattr(stored_hash, 'tobytes'):
             stored_hash = stored_hash.tobytes()
         
-        # Converti la password in bytes
+        # Verify password
         password_bytes = password.encode('utf-8')
         
-        print(f"DEBUG: Verifying password for user: {username}")
-        print(f"DEBUG: Stored hash type: {type(stored_hash)}, length: {len(stored_hash) if stored_hash else 0}")
+        print(f"🔒 Verifying password for user: {username}")
         
-        # Verifica la password
         if not bcrypt.checkpw(password_bytes, stored_hash):
-            print(f"DEBUG: Password verification failed for user: {username}")
+            print(f"🔒 Password verification failed for user: {username}")
             cur.close()
             conn.close()
             return jsonify({"error": "Invalid credentials"}), 401
 
-        print(f"DEBUG: Password verification successful for user: {username}")
+        print(f"🔒 Password verification successful for user: {username}")
 
         # Update last login
         cur.execute(
@@ -241,9 +276,19 @@ def login():
         token_payload = {
             'username': username,
             'exp': datetime.utcnow() + timedelta(hours=24),
-            'iat': datetime.utcnow()
+            'iat': datetime.utcnow(),
+            'type': 'access'
         }
         token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+        # Generate refresh token
+        refresh_payload = {
+            'username': username,
+            'exp': datetime.utcnow() + timedelta(days=7),
+            'iat': datetime.utcnow(),
+            'type': 'refresh'
+        }
+        refresh_token = jwt.encode(refresh_payload, app.config['SECRET_KEY'], algorithm='HS256')
 
         # Store session
         session_id = str(uuid.uuid4())
@@ -261,8 +306,10 @@ def login():
         return jsonify({
             "message": "Login successful",
             "token": token,
+            "refresh_token": refresh_token,
             "session_id": session_id,
-            "username": username
+            "username": username,
+            "expires_in": 86400  # 24 hours in seconds
         })
 
     except Exception as e:
@@ -270,6 +317,42 @@ def login():
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Login failed: {str(e)}"}), 500
+
+@app.route('/refresh-token', methods=['POST'])
+def refresh_token():
+    """Refresh JWT token using refresh token"""
+    data = request.get_json()
+    refresh_token = data.get('refresh_token')
+
+    if not refresh_token:
+        return jsonify({"error": "Refresh token required"}), 400
+
+    try:
+        payload = jwt.decode(refresh_token, app.config['SECRET_KEY'], algorithms=['HS256'])
+        
+        if payload.get('type') != 'refresh':
+            return jsonify({"error": "Invalid token type"}), 401
+
+        username = payload['username']
+
+        # Generate new access token
+        token_payload = {
+            'username': username,
+            'exp': datetime.utcnow() + timedelta(hours=24),
+            'iat': datetime.utcnow(),
+            'type': 'access'
+        }
+        new_token = jwt.encode(token_payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+        return jsonify({
+            "token": new_token,
+            "expires_in": 86400
+        })
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Refresh token expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid refresh token"}), 401
 
 @app.route('/validate-token', methods=['POST'])
 def validate_token():
@@ -288,6 +371,30 @@ def validate_token():
     except jwt.InvalidTokenError:
         return jsonify({"valid": False, "error": "Invalid token"}), 401
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    """Logout user and invalidate session"""
+    data = request.get_json()
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return jsonify({"error": "Session ID required"}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('DELETE FROM sessions WHERE session_id = %s', (session_id,))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        return jsonify({"message": "Logout successful"})
+
+    except Exception as e:
+        return jsonify({"error": f"Logout failed: {str(e)}"}), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
@@ -300,7 +407,8 @@ def health():
         return jsonify({
             "status": "Auth service is running", 
             "database": "connected",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "security": "bcrypt+jwt+validation"
         })
     except Exception as e:
         return jsonify({
@@ -315,9 +423,7 @@ if __name__ == '__main__':
     if init_db():
         print("✅ Database initialized successfully")
         print("✅ Auth service starting on port 5001...")
-        app.run(host='0.0.0.0', port=5001, debug=True)
+        print("🔒 Security features: bcrypt, JWT, input validation")
+        app.run(host='0.0.0.0', port=5001, debug=False)
     else:
         print("❌ Failed to initialize database, service cannot start")
-
-
-
