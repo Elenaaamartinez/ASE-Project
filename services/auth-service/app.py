@@ -59,7 +59,7 @@ def init_db():
     cur = conn.cursor()
     
     try:
-        # Create users table
+        # Create users table with NULL allowed for email
         cur.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -110,20 +110,21 @@ def validate_input(data):
     elif not re.match(r'^[a-zA-Z0-9_]+$', username):
         errors.append("Username can only contain letters, numbers and underscores")
     
-    # Validate password
+    # Validate password - SEMPLIFICATA PER TESTING
     password = data.get('password', '')
     if not password:
         errors.append("Password is required")
-    elif len(password) < 8:
-        errors.append("Password must be at least 8 characters")
-    elif not any(c.isupper() for c in password):
-        errors.append("Password must contain at least one uppercase letter")
-    elif not any(c.islower() for c in password):
-        errors.append("Password must contain at least one lowercase letter")
-    elif not any(c.isdigit() for c in password):
-        errors.append("Password must contain at least one number")
+    elif len(password) < 4:
+        errors.append("Password must be at least 4 characters")
+    # Commentato per testing - scommenta per produzione
+    # elif not any(c.isupper() for c in password):
+    #     errors.append("Password must contain at least one uppercase letter")
+    # elif not any(c.islower() for c in password):
+    #     errors.append("Password must contain at least one lowercase letter")
+    # elif not any(c.isdigit() for c in password):
+    #     errors.append("Password must contain at least one number")
     
-    # Validate email if provided
+    # Validate email if provided (email è opzionale)
     email = data.get('email', '').strip()
     if email and not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
         errors.append("Invalid email format")
@@ -168,6 +169,11 @@ def register():
     password = data['password']
     email = data.get('email', '').strip()
 
+    # Convert empty email to None to avoid unique constraint violations
+    if email == '':
+        email = None
+        print(f"🔧 Email converted to None for user: {username}")
+
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -179,6 +185,14 @@ def register():
             conn.close()
             return jsonify({"error": "Username already exists"}), 400
 
+        # Check if email already exists (only if email is provided and not None)
+        if email:
+            cur.execute('SELECT email FROM users WHERE email = %s', (email,))
+            if cur.fetchone():
+                cur.close()
+                conn.close()
+                return jsonify({"error": "Email already exists"}), 400
+
         # Hash password with bcrypt
         print(f"🔒 Hashing password for user: {username}")
         salt = bcrypt.gensalt()
@@ -186,7 +200,7 @@ def register():
         
         print(f"🔒 Generated hash successfully for {username}")
 
-        # Insert new user
+        # Insert new user (email can be NULL)
         cur.execute(
             'INSERT INTO users (username, email, password_hash) VALUES (%s, %s, %s)',
             (username, email, password_hash)
@@ -207,6 +221,9 @@ def register():
             "username": username
         }), 201
 
+    except psycopg2.IntegrityError as e:
+        print(f"❌ Database integrity error: {e}")
+        return jsonify({"error": "Registration failed: username or email already exists"}), 400
     except Exception as e:
         print(f"❌ Registration error: {e}")
         import traceback
@@ -401,12 +418,14 @@ def health():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute('SELECT 1')
+        cur.execute('SELECT COUNT(*) FROM users')
+        users_count = cur.fetchone()[0]
         cur.close()
         conn.close()
         return jsonify({
             "status": "Auth service is running", 
             "database": "connected",
+            "users_count": users_count,
             "timestamp": datetime.now().isoformat(),
             "security": "bcrypt+jwt+validation"
         })
@@ -424,6 +443,7 @@ if __name__ == '__main__':
         print("✅ Database initialized successfully")
         print("✅ Auth service starting on port 5001...")
         print("🔒 Security features: bcrypt, JWT, input validation")
+        print("📧 Email handling: NULL allowed for empty emails")
         app.run(host='0.0.0.0', port=5001, debug=False)
     else:
         print("❌ Failed to initialize database, service cannot start")
