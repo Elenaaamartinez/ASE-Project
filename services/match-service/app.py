@@ -5,16 +5,24 @@ from datetime import datetime
 import redis
 import requests
 import json
-from flask_cors import CORS  # AGGIUNGI
+from flask_cors import CORS
+import os
 
 app = Flask(__name__)
-CORS(app)  # AGGIUNGI
+CORS(app)
 
-# Configurazione Redis
-redis_client = redis.Redis(host='match-db', port=6379, db=0, decode_responses=True)
+# Redis configuration with connection pooling
+redis_client = redis.Redis(
+    host='match-db', 
+    port=6379, 
+    db=0, 
+    decode_responses=True,
+    socket_connect_timeout=5,
+    socket_keepalive=True
+)
 
 class EscobaGame:
-    """Logica completa del gioco La Escoba"""
+    """Complete La Escoba game logic with persistence"""
 
     def __init__(self, match_id, player1, player2):
         self.match_id = match_id
@@ -27,25 +35,26 @@ class EscobaGame:
         self.captured_cards = {player1: [], player2: []}
         self.moves = []
         self.deck = []
+        self.created_at = datetime.now().isoformat()
         
-        # Inizializza partita
+        # Initialize game
         self._initialize_game()
 
     def _initialize_game(self):
-        """Inizializza una nuova partita"""
-        # Crea mazzo (40 carte spagnole)
+        """Initialize a new game"""
+        # Create deck (40 Spanish cards)
         self.deck = list(range(1, 41))
         random.shuffle(self.deck)
         
-        # Distribuisci 3 carte a ogni giocatore
+        # Deal 3 cards to each player
         for player in self.players:
             self.player_hands[player] = [self.deck.pop() for _ in range(3)]
         
-        # Metti 4 carte sul tavolo
+        # Put 4 cards on the table
         self.table_cards = [self.deck.pop() for _ in range(4)]
 
     def _get_card_value(self, card_id):
-        """Restituisce il valore della carta per il gioco (1-10)"""
+        """Return card value for game (1-10)"""
         if 1 <= card_id <= 7:
             return card_id
         elif 8 <= card_id <= 10:  # Sota de Oros, Copas, Espadas
@@ -64,7 +73,7 @@ class EscobaGame:
             return 10
 
     def _get_card_suit(self, card_id):
-        """Restituisce il seme della carta"""
+        """Return card suit"""
         if 1 <= card_id <= 10:
             return "Oros"
         elif 11 <= card_id <= 20:
@@ -75,7 +84,7 @@ class EscobaGame:
             return "Bastos"
 
     def _find_card_combinations(self, target_sum, available_cards):
-        """Trova tutte le combinazioni di carte che sommano a target_sum"""
+        """Find all card combinations that sum to target_sum"""
         def find_combinations(start, current_sum, current_combo):
             if current_sum == target_sum:
                 results.append(current_combo[:])
@@ -95,42 +104,42 @@ class EscobaGame:
         return results
 
     def play_card(self, player, card_id):
-        """Gioca una carta"""
+        """Play a card"""
         if player != self.current_player:
-            return False, "Non è il tuo turno"
+            return False, "Not your turn"
         
         if card_id not in self.player_hands[player]:
-            return False, "Carta non nella tua mano"
+            return False, "Card not in your hand"
         
-        # Trova tutte le possibili catture
+        # Find all possible captures
         played_card_value = self._get_card_value(card_id)
         target_sum = 15 - played_card_value
         possible_captures = self._find_card_combinations(target_sum, self.table_cards)
         
-        # Se non ci sono catture possibili, la carta va sul tavolo
+        # If no captures possible, card goes to table
         if not possible_captures:
             self.table_cards.append(card_id)
             self.player_hands[player].remove(card_id)
-            move_result = "carta_aggiunta_al_tavolo"
+            move_result = "card_added_to_table"
             captured_cards = []
         else:
-            # Prendi la prima combinazione valida (per semplicità)
+            # Take first valid combination (for simplicity)
             captured_cards = possible_captures[0]
-            # Rimuovi carte catturate dal tavolo
+            # Remove captured cards from table
             for card in captured_cards:
                 self.table_cards.remove(card)
-            # Aggiungi alla collezione del giocatore
+            # Add to player collection
             self.captured_cards[player].extend(captured_cards)
-            self.captured_cards[player].append(card_id)  # Anche la carta giocata
+            self.captured_cards[player].append(card_id)  # Also the played card
             self.player_hands[player].remove(card_id)
-            move_result = "carte_catturate"
+            move_result = "cards_captured"
             
-            # Controlla se è una scopa (tavolo vuoto)
+            # Check if it's a scopa (empty table)
             if len(self.table_cards) == 0:
-                self.scores[player] += 1  # Punto scopa
+                self.scores[player] += 1  # Scopa point
                 move_result = "scopa"
 
-        # Registra mossa
+        # Record move
         move = {
             "player": player,
             "card_played": card_id,
@@ -140,34 +149,34 @@ class EscobaGame:
         }
         self.moves.append(move)
         
-        # Cambia turno
+        # Change turn
         self.current_player = self.players[1] if player == self.players[0] else self.players[0]
         
-        # Pesca nuova carta se il mazzo non è vuoto
+        # Draw new card if deck not empty
         if self.deck and len(self.player_hands[player]) < 3:
             new_card = self.deck.pop()
             self.player_hands[player].append(new_card)
         
-        # Controlla se la partita è finita
+        # Check if game is over
         if self._is_game_over():
             self._end_game()
         
         return True, move_result
 
     def _is_game_over(self):
-        """Controlla se la partita è finita"""
-        # Partita finisce quando non ci sono più carte nel mazzo e i giocatori hanno finito le carte
+        """Check if game is over"""
+        # Game ends when no more cards in deck and players have no cards
         return len(self.deck) == 0 and all(len(hand) == 0 for hand in self.player_hands.values())
 
     def _end_game(self):
-        """Calcola punteggio finale e termina partita"""
+        """Calculate final score and end game"""
         self.status = "finished"
         
-        # Calcola punteggi finali
+        # Calculate final scores
         final_scores = self._calculate_final_scores()
         self.scores = final_scores
         
-        # Determina vincitore
+        # Determine winner
         if self.scores[self.players[0]] > self.scores[self.players[1]]:
             winner = self.players[0]
         elif self.scores[self.players[1]] > self.scores[self.players[0]]:
@@ -175,34 +184,34 @@ class EscobaGame:
         else:
             winner = "draw"
         
-        # Salva in History Service
+        # Save to History Service
         self._save_to_history(winner)
         
-        # Aggiorna statistiche giocatori
+        # Update player statistics
         self._update_player_stats(winner)
 
     def _calculate_final_scores(self):
-        """Calcola punteggi finali secondo regole La Escoba"""
+        """Calculate final scores according to La Escoba rules"""
         scores = {self.players[0]: 0, self.players[1]: 0}
         
         for player in self.players:
             captured = self.captured_cards[player]
             
-            # 1. Scope (già conteggiate durante il gioco)
+            # 1. Scopas (already counted during game)
             scores[player] += self.scores[player]
             
-            # 2. Sette di Oros e Copas
+            # 2. Seven of Oros and Copas
             for card_id in captured:
-                if card_id == 7:  # 7 di Oros
+                if card_id == 7:  # 7 of Oros
                     scores[player] += 1
-                elif card_id == 17:  # 7 di Copas
+                elif card_id == 17:  # 7 of Copas
                     scores[player] += 1
             
-            # 3. Maggior numero di carte
+            # 3. Most cards
             if len(captured) > len(self.captured_cards[self._get_opponent(player)]):
                 scores[player] += 1
             
-            # 4. Maggior numero di Oros
+            # 4. Most Oros
             player_oros = len([c for c in captured if self._get_card_suit(c) == "Oros"])
             opponent_oros = len([c for c in self.captured_cards[self._get_opponent(player)] 
                                if self._get_card_suit(c) == "Oros"])
@@ -212,11 +221,11 @@ class EscobaGame:
         return scores
 
     def _get_opponent(self, player):
-        """Restituisce l'avversario"""
+        """Return opponent"""
         return self.players[1] if player == self.players[0] else self.players[0]
 
     def _save_to_history(self, winner):
-        """Salva partita in History Service"""
+        """Save match to History Service"""
         try:
             match_data = {
                 "match_id": self.match_id,
@@ -225,36 +234,50 @@ class EscobaGame:
                 "winner": winner,
                 "scores": self.scores,
                 "moves": self.moves,
+                "start_time": self.created_at,
                 "end_time": datetime.now().isoformat()
             }
-            requests.post(
+            
+            response = requests.post(
                 "http://history-service:5005/history/matches",
                 json=match_data,
-                timeout=5
+                timeout=10
             )
+            
+            if response.status_code == 201:
+                print(f"✅ Match {self.match_id} saved to history")
+            else:
+                print(f"❌ Failed to save match to history: {response.status_code}")
+                
         except Exception as e:
-            print(f"Errore salvataggio history: {e}")
+            print(f"❌ Error saving to history: {e}")
 
     def _update_player_stats(self, winner):
-        """Aggiorna statistiche giocatori"""
+        """Update player statistics"""
         try:
             for player in self.players:
                 result = "win" if player == winner else "loss" if winner != "draw" else "draw"
                 score_delta = self.scores[player]
                 
-                requests.put(
+                response = requests.put(
                     f"http://player-service:5004/players/{player}/stats",
                     json={
                         "match_result": result,
                         "score_delta": score_delta
                     },
-                    timeout=5
+                    timeout=10
                 )
+                
+                if response.status_code == 200:
+                    print(f"✅ Updated stats for {player}")
+                else:
+                    print(f"❌ Failed to update stats for {player}: {response.status_code}")
+                    
         except Exception as e:
-            print(f"Errore aggiornamento stats: {e}")
+            print(f"❌ Error updating stats: {e}")
 
     def get_game_state(self, player):
-        """Restituisce stato partita per un giocatore"""
+        """Return game state for a player"""
         return {
             "match_id": self.match_id,
             "players": self.players,
@@ -265,11 +288,12 @@ class EscobaGame:
             "scores": self.scores,
             "captured_cards": self.captured_cards.get(player, []),
             "remaining_deck": len(self.deck),
-            "message": f"Stato partita per {player}"
+            "moves_count": len(self.moves),
+            "message": f"Game state for {player}"
         }
 
     def to_dict(self):
-        """Converte oggetto in dict per Redis"""
+        """Convert object to dict for Redis"""
         return {
             "match_id": self.match_id,
             "players": self.players,
@@ -280,12 +304,13 @@ class EscobaGame:
             "scores": self.scores,
             "captured_cards": self.captured_cards,
             "moves": self.moves,
-            "deck": self.deck
+            "deck": self.deck,
+            "created_at": self.created_at
         }
 
     @classmethod
     def from_dict(cls, data):
-        """Crea oggetto da dict"""
+        """Create object from dict"""
         game = cls(data["match_id"], data["players"][0], data["players"][1])
         game.current_player = data["current_player"]
         game.status = data["status"]
@@ -295,30 +320,63 @@ class EscobaGame:
         game.captured_cards = data["captured_cards"]
         game.moves = data["moves"]
         game.deck = data["deck"]
+        game.created_at = data.get("created_at", datetime.now().isoformat())
         return game
 
-# Storage partite (Redis)
+# Game storage (Redis)
 def save_match(game):
-    """Salva partita in Redis"""
-    redis_client.set(f"match:{game.match_id}", json.dumps(game.to_dict()))
+    """Save match to Redis"""
+    try:
+        redis_client.set(f"match:{game.match_id}", json.dumps(game.to_dict()), ex=86400)  # 24h expiry
+        return True
+    except Exception as e:
+        print(f"❌ Error saving match to Redis: {e}")
+        return False
 
 def load_match(match_id):
-    """Carica partita da Redis"""
-    data = redis_client.get(f"match:{match_id}")
-    if data:
-        return EscobaGame.from_dict(json.loads(data))
-    return None
+    """Load match from Redis"""
+    try:
+        data = redis_client.get(f"match:{match_id}")
+        if data:
+            return EscobaGame.from_dict(json.loads(data))
+        return None
+    except Exception as e:
+        print(f"❌ Error loading match from Redis: {e}")
+        return None
+
+def delete_match(match_id):
+    """Delete match from Redis"""
+    try:
+        redis_client.delete(f"match:{match_id}")
+        return True
+    except Exception as e:
+        print(f"❌ Error deleting match from Redis: {e}")
+        return False
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "Matches service is running"})
+    """Health check endpoint"""
+    try:
+        # Test Redis connection
+        redis_client.ping()
+        return jsonify({
+            "status": "Matches service is running",
+            "redis": "connected",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "Matches service is running",
+            "redis": "disconnected",
+            "error": str(e)
+        }), 503
 
 @app.route('/matches', methods=['POST'])
 def create_match():
-    """Crea nuova partita"""
+    """Create new match"""
     try:
         data = request.get_json()
-        print(f"DEBUG: Received data: {data}")  # Debug
+        print(f"🎮 Received match creation data: {data}")
         
         if not data:
             return jsonify({"error": "JSON data required"}), 400
@@ -327,77 +385,133 @@ def create_match():
         player2 = data.get('player2')
 
         if not player1 or not player2:
-            return jsonify({"error": "Entrambi i giocatori richiesti"}), 400
+            return jsonify({"error": "Both players required"}), 400
 
         match_id = str(uuid.uuid4())
-        print(f"DEBUG: Creating match {match_id} for players {player1} vs {player2}")
+        print(f"🎮 Creating match {match_id} for players {player1} vs {player2}")
         
         game = EscobaGame(match_id, player1, player2)
-        save_match(game)
+        
+        if not save_match(game):
+            return jsonify({"error": "Failed to save match"}), 500
 
-        print(f"DEBUG: Match created successfully: {match_id}")
+        print(f"✅ Match created successfully: {match_id}")
 
         return jsonify({
             "match_id": match_id,
             "players": [player1, player2],
-            "message": "Partita creata con successo",
-            "initial_table": game.table_cards
+            "message": "Match created successfully",
+            "initial_table": game.table_cards,
+            "status": "active"
         }), 201
 
     except Exception as e:
         print(f"❌ Error creating match: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": f"Errore nella creazione della partita: {str(e)}"}), 500
+        return jsonify({"error": f"Match creation failed: {str(e)}"}), 500
 
 @app.route('/matches/<match_id>', methods=['GET'])
 def get_match(match_id):
-    """Ottieni stato partita"""
-    game = load_match(match_id)
-    if not game:
-        return jsonify({"error": "Partita non trovata"}), 404
+    """Get match state"""
+    try:
+        game = load_match(match_id)
+        if not game:
+            return jsonify({"error": "Match not found"}), 404
 
-    player = request.args.get('player')
-    if not player:
-        return jsonify({"error": "Parametro player richiesto"}), 400
+        player = request.args.get('player')
+        if not player:
+            return jsonify({"error": "Player parameter required"}), 400
 
-    if player not in game.players:
-        return jsonify({"error": "Giocatore non partecipa a questa partita"}), 403
+        if player not in game.players:
+            return jsonify({"error": "Player not participating in this match"}), 403
 
-    return jsonify(game.get_game_state(player))
+        return jsonify(game.get_game_state(player))
+
+    except Exception as e:
+        print(f"❌ Error getting match: {e}")
+        return jsonify({"error": f"Failed to get match: {str(e)}"}), 500
 
 @app.route('/matches/<match_id>/play', methods=['POST'])
 def play_card(match_id):
-    """Gioca una carta"""
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "JSON data required"}), 400
+    """Play a card"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "JSON data required"}), 400
 
-    player = data.get('player')
-    card_id = data.get('card_id')
+        player = data.get('player')
+        card_id = data.get('card_id')
 
-    if not player or not card_id:
-        return jsonify({"error": "Player e card_id richiesti"}), 400
+        if not player or card_id is None:
+            return jsonify({"error": "Player and card_id required"}), 400
 
-    game = load_match(match_id)
-    if not game:
-        return jsonify({"error": "Partita non trovata"}), 404
+        # Convert card_id to int if it's a string
+        try:
+            card_id = int(card_id)
+        except (ValueError, TypeError):
+            return jsonify({"error": "Invalid card_id"}), 400
 
-    success, message = game.play_card(player, card_id)
-    
-    if success:
-        save_match(game)  # Salva stato aggiornato
+        game = load_match(match_id)
+        if not game:
+            return jsonify({"error": "Match not found"}), 404
+
+        success, message = game.play_card(player, card_id)
+        
+        if success:
+            if not save_match(game):
+                return jsonify({"error": "Failed to save game state"}), 500
+                
+            return jsonify({
+                "message": message,
+                "game_state": game.get_game_state(player)
+            })
+        else:
+            return jsonify({"error": message}), 400
+
+    except Exception as e:
+        print(f"❌ Error playing card: {e}")
+        return jsonify({"error": f"Failed to play card: {str(e)}"}), 500
+
+@app.route('/matches/<match_id>', methods=['DELETE'])
+def delete_match_endpoint(match_id):
+    """Delete a match (admin only)"""
+    try:
+        if delete_match(match_id):
+            return jsonify({"message": "Match deleted successfully"})
+        else:
+            return jsonify({"error": "Failed to delete match"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete match: {str(e)}"}), 500
+
+@app.route('/matches', methods=['GET'])
+def list_matches():
+    """List all active matches (admin only)"""
+    try:
+        match_keys = redis_client.keys("match:*")
+        matches = []
+        
+        for key in match_keys:
+            match_data = redis_client.get(key)
+            if match_data:
+                match_obj = json.loads(match_data)
+                matches.append({
+                    "match_id": match_obj["match_id"],
+                    "players": match_obj["players"],
+                    "status": match_obj["status"],
+                    "current_player": match_obj["current_player"]
+                })
+        
         return jsonify({
-            "message": message,
-            "game_state": game.get_game_state(player)
+            "active_matches": len(matches),
+            "matches": matches
         })
-    else:
-        return jsonify({"error": message}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to list matches: {str(e)}"}), 500
 
 if __name__ == '__main__':
     print("🎮 Match Service starting on port 5003...")
     print("🃏 La Escoba game logic loaded")
     print("🗄️  Redis storage enabled")
-    app.run(host='0.0.0.0', port=5003, debug=True)
-
-
+    print("🔗 Integrated with History and Player services")
+    app.run(host='0.0.0.0', port=5003, debug=False)
