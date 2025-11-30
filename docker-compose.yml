@@ -1,150 +1,232 @@
 version: '3.8'
 
 services:
+  # API Gateway
   api-gateway:
     build: ./services/api-gateway
     ports:
       - "5000:5000"
     environment:
-      - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - CARDS_SERVICE_URL=http://cards-service:5002
+      - MATCHES_SERVICE_URL=http://matches-service:5003
+      - PLAYER_SERVICE_URL=http://player-service:5004
+      - HISTORY_SERVICE_URL=http://history-service:5005
+    depends_on:
+      - auth-service
+      - cards-service
+      - match-service
+      - player-service
+      - history-service
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Auth Service
   auth-service:
     build: ./services/auth-service
-    expose:
-      - "5001"
+    ports:
+      - "5001:5001"
     environment:
-      - FLASK_ENV=development
-      - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
       - DB_HOST=auth-db
       - DB_NAME=auth_db
       - DB_USER=user
       - DB_PASSWORD=password
-      - DB_PORT=5432
+      - SECRET_KEY=your-super-secret-jwt-key-change-in-production-2025
     depends_on:
-      - auth-db
+      auth-db:
+        condition: service_healthy
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Cards Service
   cards-service:
     build: ./services/cards-service
-    expose:
-      - "5002"
-    environment:
-      - FLASK_ENV=development
+    ports:
+      - "5002:5002"
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  matches-service:
+  # Match Service
+  match-service:
     build: ./services/match-service
-    expose:
-      - "5003"
+    ports:
+      - "5003:5003"
     environment:
-      - FLASK_ENV=development
+      - REDIS_HOST=match-db
+      - REDIS_PORT=6379
     depends_on:
-      - match-db
+      match-db:
+        condition: service_healthy
+      history-service:
+        condition: service_healthy
+      player-service:
+        condition: service_healthy
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Player Service
   player-service:
     build: ./services/player-service
-    expose:
-      - "5004"
+    ports:
+      - "5004:5004"
     environment:
-      - FLASK_ENV=development
       - DB_HOST=player-db
       - DB_NAME=player_db
       - DB_USER=user
       - DB_PASSWORD=password
-      - DB_PORT=5432
     depends_on:
-      - player-db
+      player-db:
+        condition: service_healthy
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # History Service
   history-service:
     build: ./services/history-service
-    expose:
-      - "5005"
+    ports:
+      - "5005:5005"
     environment:
-      - FLASK_ENV=development
       - DB_HOST=history-db
       - DB_NAME=history_db
       - DB_USER=user
       - DB_PASSWORD=password
-      - DB_PORT=5432
     depends_on:
-      - history-db
+      history-db:
+        condition: service_healthy
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # FRONTEND con Node.js http-server
+  # Frontend
   frontend:
     build: ./frontend
     ports:
       - "8080:8080"
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Databases
   auth-db:
     image: postgres:13
     environment:
+      - POSTGRES_DB=auth_db
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=auth_db
     volumes:
       - auth_data:/var/lib/postgresql/data
+      - ./databases/init-scripts/auth-init.sql:/docker-entrypoint-initdb.d/01-auth-init.sql
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   player-db:
     image: postgres:13
     environment:
+      - POSTGRES_DB=player_db
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=player_db
     volumes:
       - player_data:/var/lib/postgresql/data
+      - ./databases/init-scripts/player-init.sql:/docker-entrypoint-initdb.d/01-player-init.sql
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d player_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   cards-db:
     image: postgres:13
     environment:
+      - POSTGRES_DB=cards_db
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=cards_db
     volumes:
       - cards_data:/var/lib/postgresql/data
+      - ./databases/init-scripts/cards-init.sql:/docker-entrypoint-initdb.d/01-cards-init.sql
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d cards_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   history-db:
     image: postgres:13
     environment:
+      - POSTGRES_DB=history_db
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=history_db
     volumes:
       - history_data:/var/lib/postgresql/data
+      - ./databases/init-scripts/history-init.sql:/docker-entrypoint-initdb.d/01-history-init.sql
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d history_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   match-db:
-    image: redis:6
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
     volumes:
-      - match_data:/data
+      - redis_data:/data
     networks:
       - escoba-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   auth_data:
-  cards_data:
   player_data:
+  cards_data:
   history_data:
-  match_data:
+  redis_data:
 
 networks:
   escoba-network:
