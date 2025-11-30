@@ -1,51 +1,261 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Escoba - Card Game</title>
+    <title>La Escoba - Spanish Card Game</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎴 La Escoba</h1>
-            <nav>
-                <button id="loginBtn">Accedi</button>
-                <button id="registerBtn">Registrati</button>
-                <button id="playBtn" style="display:none">Gioca</button>
-                <button id="profileBtn" style="display:none">Profilo</button>
-                <button id="logoutBtn" style="display:none">Esci</button>
-            </nav>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>🎴 La Escoba</h1>
+                    <p class="subtitle">Classic Spanish Card Game</p>
+                </div>
+                <nav class="nav">
+                    <button id="loginBtn" class="btn btn-primary">Login</button>
+                    <button id="registerBtn" class="btn btn-secondary">Sign Up</button>
+                    <button id="playBtn" class="btn btn-success" style="display:none">Play Now</button>
+                    <button id="profileBtn" class="btn btn-info" style="display:none">Profile</button>
+                    <button id="logoutBtn" class="btn btn-danger" style="display:none">Logout</button>
+                </nav>
+            </div>
         </header>
-        
-        <main>
-            <div id="welcome">
-                <h2>Benvenuto a La Escoba!</h2>
-                <p>Il classico gioco di carte spagnolo</p>
-                <div class="card-preview">
-                    <div class="card">
-                        <div class="card-value">7</div>
-                        <div class="suit red">♦</div>
-                        <div class="card-name">Oros</div>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Welcome Section -->
+            <section id="welcomeSection" class="section active">
+                <div class="welcome-container">
+                    <!-- Hero Section -->
+                    <div class="hero-section">
+                        <h2>Welcome to La Escoba</h2>
+                        <p class="hero-subtitle">The classic Spanish card game. Challenging, strategic, and addictive.</p>
+                        <div class="hero-buttons">
+                            <button class="btn btn-lg btn-primary" onclick="document.getElementById('loginBtn').click()">Play Now</button>
+                            <button class="btn btn-lg btn-outline" onclick="document.getElementById('rulesSection').scrollIntoView({behavior: 'smooth'})">View Rules</button>
+                        </div>
                     </div>
-                    <div class="card">
-                        <div class="card-value">10</div>
-                        <div class="suit red">♥</div>
-                        <div class="card-name">Copas</div>
+
+                    <!-- Game Modes Section -->
+                    <section class="game-modes">
+                        <h3>Game Modes</h3>
+                        <div class="modes-grid">
+                            <div class="mode-card">
+                                <div class="mode-icon">♠</div>
+                                <h4>Classic</h4>
+                                <p>The traditional Escoba mode. Play against another player and defeat their cards.</p>
+                            </div>
+                            <div class="mode-card">
+                                <div class="mode-icon">♥</div>
+                                <h4>Win-Lose</h4>
+                                <p>A challenging variant where the rules change. Stay alert!</p>
+                            </div>
+                            <div class="mode-card">
+                                <div class="mode-icon">♦</div>
+                                <h4>Strategic</h4>
+                                <p>Advanced mode that requires planning. Only for the best players!</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Spanish Cards Section -->
+                    <section class="cards-section">
+                        <h3>The Spanish Deck</h3>
+                        <div class="suits-grid">
+                            <div class="suit-group">
+                                <!-- Replaced Unicode symbol with actual Coins image -->
+                                <div class="suit-icon oros">
+                                    <img src="/images/captura-20desde-202025-11-30-2012-49-00.png" alt="Coins" class="card-suit-img">
+                                </div>
+                                <p>Coins</p>
+                                <span>Value: 1-12</span>
+                            </div>
+                            <div class="suit-group">
+                                <!-- Replaced Unicode symbol with actual Cups image -->
+                                <div class="suit-icon copas">
+                                    <img src="/images/captura-20desde-202025-11-30-2012-49-36.png" alt="Cups" class="card-suit-img">
+                                </div>
+                                <p>Cups</p>
+                                <span>Value: 1-12</span>
+                            </div>
+                            <div class="suit-group">
+                                <!-- Replaced Unicode symbol with actual Swords image -->
+                                <div class="suit-icon espadas">
+                                    <img src="/images/captura-20desde-202025-11-30-2012-49-14.png" alt="Swords" class="card-suit-img">
+                                </div>
+                                <p>Swords</p>
+                                <span>Value: 1-12</span>
+                            </div>
+                            <div class="suit-group">
+                                <!-- Replaced Unicode symbol with actual Clubs image -->
+                                <div class="suit-icon bastos">
+                                    <img src="/images/captura-20desde-202025-11-30-2012-49-46.png" alt="Clubs" class="card-suit-img">
+                                </div>
+                                <p>Clubs</p>
+                                <span>Value: 1-12</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- How to Play Section -->
+                    <section class="gameplay-section">
+                        <h3>How to Play</h3>
+                        <div class="gameplay-content">
+                            <div class="gameplay-step">
+                                <div class="step-number">1</div>
+                                <h4>Deal 3 Cards</h4>
+                                <p>Each player receives 3 cards and 4 are placed on the table.</p>
+                            </div>
+                            <div class="gameplay-step">
+                                <div class="step-number">2</div>
+                                <h4>Sum the Cards</h4>
+                                <p>You must add your cards with those on the table to make 15 points.</p>
+                            </div>
+                            <div class="gameplay-step">
+                                <div class="step-number">3</div>
+                                <h4>Collect Cards</h4>
+                                <p>If you successfully sum to 15, collect those cards. If not, leave a card.</p>
+                            </div>
+                            <div class="gameplay-step">
+                                <div class="step-number">4</div>
+                                <h4>Win the Match</h4>
+                                <p>The player who collects the most cards wins. A sweep gives 1 extra point!</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Rules Section -->
+                    <section id="rulesSection" class="rules-section">
+                        <h3>Main Rules</h3>
+                        <div class="rules-container">
+                            <div class="rule-item">
+                                <h4>Game Objective</h4>
+                                <p>Collect as many cards as possible by combining yours with those on the table to sum 15 points. A sweep (collecting all cards from the table) adds 1 extra point.</p>
+                            </div>
+                            <div class="rule-item">
+                                <h4>The Deck</h4>
+                                <p>Played with a 40-card Spanish deck (4 suits of 10 cards each: Coins, Cups, Swords and Clubs). Values range from 1 to 10, where Ace = 1, Jack = 10, Knight = 11 and King = 12.</p>
+                            </div>
+                            <div class="rule-item">
+                                <h4>Card Distribution</h4>
+                                <p>3 cards are dealt to each player and 4 on the table at the start. When a player plays, their cards are replenished to 3.</p>
+                            </div>
+                            <div class="rule-item">
+                                <h4>Scoring</h4>
+                                <p>Points are awarded for cards collected, sweeps made, and special value cards. Various variants modify these rules to make it more interesting.</p>
+                            </div>
+                            <div class="rule-item">
+                                <h4>Valid Plays</h4>
+                                <p>You can only collect cards if the sum is exactly 15. If you cannot make any combination, you must drop a card on the table.</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <!-- Auth Section (Login/Register) -->
+            <section id="authSection" class="section" style="display:none">
+                <div class="auth-container">
+                    <div id="loginForm" class="form-container active">
+                        <h3>Login</h3>
+                        <input type="text" id="loginUsername" placeholder="Username" class="input">
+                        <input type="password" id="loginPassword" placeholder="Password" class="input">
+                        <button onclick="handleLogin()" class="btn btn-primary">Login</button>
+                        <p>Don't have an account? <a onclick="switchToRegister()" href="#">Sign up here</a></p>
                     </div>
-                    <div class="card">
-                        <div class="card-value">4</div>
-                        <div class="suit black">♠</div>
-                        <div class="card-name">Espadas</div>
+
+                    <div id="registerForm" class="form-container">
+                        <h3>Sign Up</h3>
+                        <input type="text" id="registerUsername" placeholder="Username" class="input">
+                        <input type="email" id="registerEmail" placeholder="Email" class="input">
+                        <input type="password" id="registerPassword" placeholder="Password" class="input">
+                        <input type="password" id="registerConfirm" placeholder="Confirm Password" class="input">
+                        <button onclick="handleRegister()" class="btn btn-success">Sign Up</button>
+                        <p>Already have an account? <a onclick="switchToLogin()" href="#">Login here</a></p>
                     </div>
                 </div>
-            </div>
-            
-            <div id="gameSection" style="display:none">
-                <!-- Il contenuto del gioco viene caricato dinamicamente -->
-            </div>
+            </section>
+
+            <!-- Game Section -->
+            <section id="gameSection" class="section" style="display:none">
+                <div class="game-container">
+                    <div class="game-header">
+                        <h3>Game in Progress</h3>
+                        <button class="btn btn-outline" onclick="authManager.showMainScreen()">← Back</button>
+                    </div>
+                    <div class="game-board">
+                        <div class="board-section">
+                            <h4>Cards on Table</h4>
+                            <div class="cards-row" id="boardCards"></div>
+                        </div>
+                        
+                        <div class="board-section">
+                            <h4>Your Cards</h4>
+                            <div class="cards-row" id="playerCards"></div>
+                        </div>
+
+                        <div class="game-actions">
+                            <button onclick="playCard()" class="btn btn-success">Play Card</button>
+                            <button onclick="endTurn()" class="btn btn-info">Pass Turn</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profileSection" class="section" style="display:none">
+                <div class="profile-container">
+                    <div class="game-header">
+                        <h3>Player Profile</h3>
+                        <button class="btn btn-outline" onclick="authManager.showMainScreen()">← Back</button>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Total Score</span>
+                            <span class="stat-value" id="totalScore">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Matches Played</span>
+                            <span class="stat-value" id="matchesPlayed">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Matches Won</span>
+                            <span class="stat-value" id="matchesWon">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Win Rate</span>
+                            <span class="stat-value" id="winRate">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>La Escoba</h4>
+                    <p>The classic Spanish card game brought to the internet.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Links</h4>
+                    <ul>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Privacy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>ASE Project</h4>
+                    <p>© 2025 La Escoba. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script src="js/api.js"></script>
