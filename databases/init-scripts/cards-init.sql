@@ -1,4 +1,3 @@
--- Inizializzazione Cards Database
 CREATE TABLE IF NOT EXISTS cards (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
@@ -8,9 +7,7 @@ CREATE TABLE IF NOT EXISTS cards (
     image VARCHAR(100)
 );
 
--- Inserimento di tutte le 40 carte del mazzo spagnolo
 INSERT INTO cards (id, name, suit, value, points, image) VALUES
--- OROS (Denari)
 (1, '1 de Oros', 'Oros', 1, 1, '1_oros.png'),
 (2, '2 de Oros', 'Oros', 2, 2, '2_oros.png'),
 (3, '3 de Oros', 'Oros', 3, 3, '3_oros.png'),
@@ -21,8 +18,6 @@ INSERT INTO cards (id, name, suit, value, points, image) VALUES
 (8, 'Sota de Oros', 'Oros', 10, 8, 'sota_oros.png'),
 (9, 'Caballo de Oros', 'Oros', 11, 9, 'caballo_oros.png'),
 (10, 'Rey de Oros', 'Oros', 12, 10, 'rey_oros.png'),
-
--- COPAS (Coppe)
 (11, '1 de Copas', 'Copas', 1, 1, '1_copas.png'),
 (12, '2 de Copas', 'Copas', 2, 2, '2_copas.png'),
 (13, '3 de Copas', 'Copas', 3, 3, '3_copas.png'),
@@ -33,8 +28,6 @@ INSERT INTO cards (id, name, suit, value, points, image) VALUES
 (18, 'Sota de Copas', 'Copas', 10, 8, 'sota_copas.png'),
 (19, 'Caballo de Copas', 'Copas', 11, 9, 'caballo_copas.png'),
 (20, 'Rey de Copas', 'Copas', 12, 10, 'rey_copas.png'),
-
--- ESPADAS (Spade)
 (21, '1 de Espadas', 'Espadas', 1, 1, '1_espadas.png'),
 (22, '2 de Espadas', 'Espadas', 2, 2, '2_espadas.png'),
 (23, '3 de Espadas', 'Espadas', 3, 3, '3_espadas.png'),
@@ -45,8 +38,6 @@ INSERT INTO cards (id, name, suit, value, points, image) VALUES
 (28, 'Sota de Espadas', 'Espadas', 10, 8, 'sota_espadas.png'),
 (29, 'Caballo de Espadas', 'Espadas', 11, 9, 'caballo_espadas.png'),
 (30, 'Rey de Espadas', 'Espadas', 12, 10, 'rey_espadas.png'),
-
--- BASTOS (Bastoni)
 (31, '1 de Bastos', 'Bastos', 1, 1, '1_bastos.png'),
 (32, '2 de Bastos', 'Bastos', 2, 2, '2_bastos.png'),
 (33, '3 de Bastos', 'Bastos', 3, 3, '3_bastos.png'),
@@ -57,5 +48,4 @@ INSERT INTO cards (id, name, suit, value, points, image) VALUES
 (38, 'Sota de Bastos', 'Bastos', 10, 8, 'sota_bastos.png'),
 (39, 'Caballo de Bastos', 'Bastos', 11, 9, 'caballo_bastos.png'),
 (40, 'Rey de Bastos', 'Bastos', 12, 10, 'rey_bastos.png')
-
 ON CONFLICT (id) DO NOTHING;
