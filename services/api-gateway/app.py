@@ -8,10 +8,10 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# Service URLs - CORRETTI: match-service invece di matches-service
+# Service URLs
 AUTH_SERVICE_URL = "http://auth-service:5001"
 CARDS_SERVICE_URL = "http://cards-service:5002"
-MATCH_SERVICE_URL = "http://match-service:5003"  # CAMBIATO
+MATCH_SERVICE_URL = "http://match-service:5003"
 PLAYER_SERVICE_URL = "http://player-service:5004"
 HISTORY_SERVICE_URL = "http://history-service:5005"
 
@@ -109,7 +109,7 @@ def health():
     services = [
         ('Auth Service', AUTH_SERVICE_URL, '/health'),
         ('Cards Service', CARDS_SERVICE_URL, '/health'),
-        ('Match Service', MATCH_SERVICE_URL, '/health'),  # CAMBIATO
+        ('Match Service', MATCH_SERVICE_URL, '/health'),
         ('Player Service', PLAYER_SERVICE_URL, '/health'),
         ('History Service', HISTORY_SERVICE_URL, '/health')
     ]
@@ -187,28 +187,28 @@ def cards_deck():
 def cards_health():
     return forward_request(CARDS_SERVICE_URL, "health", "GET")
 
-# Match routes - TUTTI CAMBIATI: /match/ invece di /matches/
-@app.route('/match/match', methods=['POST'])
+# Match routes - CORRETTO: Ora usa /matches/ (plurale) per l'esterno, ma inoltra a "match" (singolare) interno
+@app.route('/matches/matches', methods=['POST'])
 def match_create():
     return forward_request(MATCH_SERVICE_URL, "match", "POST")
 
-@app.route('/match/match', methods=['GET'])
+@app.route('/matches/matches', methods=['GET'])
 def match_list():
     return forward_request(MATCH_SERVICE_URL, "match", "GET")
 
-@app.route('/match/match/<match_id>', methods=['GET'])
+@app.route('/matches/matches/<match_id>', methods=['GET'])
 def match_get(match_id):
     return forward_request(MATCH_SERVICE_URL, f"match/{match_id}", "GET")
 
-@app.route('/match/match/<match_id>/play', methods=['POST'])
+@app.route('/matches/matches/<match_id>/play', methods=['POST'])
 def match_play(match_id):
     return forward_request(MATCH_SERVICE_URL, f"match/{match_id}/play", "POST")
 
-@app.route('/match/match/<match_id>', methods=['DELETE'])
+@app.route('/matches/matches/<match_id>', methods=['DELETE'])
 def match_delete(match_id):
     return forward_request(MATCH_SERVICE_URL, f"match/{match_id}", "DELETE")
 
-@app.route('/match/health', methods=['GET'])
+@app.route('/matches/health', methods=['GET'])
 def match_health():
     return forward_request(MATCH_SERVICE_URL, "health", "GET")
 
