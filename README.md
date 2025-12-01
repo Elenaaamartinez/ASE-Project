@@ -1,150 +1,320 @@
 # La Escoba - Card Game Backend
 
-## Project Lab - Advanced Software Engineering 2025/26
+A distributed microservices-based implementation of the Spanish card game "La Escoba" with REST API, Docker deployment, and comprehensive testing.
 
-**Building a microservices architecture for the Spanish card game "La Escoba"**
+## What is La Escoba?
 
----
+La Escoba is a classic Spanish card game played with a 40-card deck (Spanish suited cards: Bastos, Copas, Espadas, Oros). Players try to capture cards from the table by matching cards that sum to 15. Capturing all remaining table cards earns an "escoba" (broom). The winner is determined by a scoring system based on:
+- Number of "escobas" (empty table captures)
+- Total number of captured cards
+- Most coins (Oros)
+- Having the 7 of Oros
+- Having the 7 of Copas
 
-## Team Members
+## Architecture Overview
 
-- [Elena Martínez Vazquez] - [e.martinezvazquez@studenti.unipi.it]
-- [Mario Perez Perez] - [m.perezperez1@studenti.unipi.it]
-- [Michele F. P. Sagone] - [m.sagone1@studenti.unipi.it]
-- [Shahd Amer] - [s.amer@studenti.unipi.it]
+The backend follows a microservices architecture with the following components:
 
----
-
-## What We're Building
-
-We're creating a microservices-based backend that lets people play the Spanish card game "La Escoba" online. It uses the 40-card Spanish deck and works pretty much like the Italian card game "Scopa" if you're familiar with that.
-
-### Main Features
-
-- **Microservices architecture**: 5 independent services + API Gateway
-- **Authentication**: OAuth2 with JWT tokens (for the final version)
-- **Matchmaking**: Automatic queue to pair up players
-- **Real-time gameplay**: 1v1 matches with full La Escoba game logic
-- **Permanent history**: Stores all matches and moves
-- **Player stats**: Rankings, scores, win rates
-
----
-
-## Architecture
-
-```ascii
-┌─────────────┐
-│   Player    │
-└──────┬──────┘
-       │ HTTPS/REST
-       ▼
-┌─────────────────────┐
-│   API Gateway       │
-└──────┬──────────────┘
-       │
-       ├──────────────┬──────────────┬──────────────┬──────────────┐
-       │              │              │              │              │
-       ▼              ▼              ▼              ▼              ▼
-┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-│  Auth    │   │ Player   │   │  Card    │   │  Match   │   │ History  │
-│ Service  │   │ Service  │   │ Service  │   │ Service  │   │ Service  │
-└────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘
-     │              │              │              │              │
-     ▼              ▼              ▼              ▼              ▼
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│ Auth DB │   │Player DB│   │ Card DB │   │Match DB │   │History  │
-│  (PG)   │   │  (PG)   │   │  (PG)   │   │ (Redis) │   │DB (PG)  │
-└─────────┘   └─────────┘   └─────────┘   └─────────┘   └─────────┘
+```
+┌─────────────────────────────────────────┐
+│          API Gateway (5000)             │
+│    (Request routing & JWT validation)   │
+└────────────────────┬────────────────────┘
+        │            │         │      │         │
+        ▼            ▼         ▼      ▼         ▼
+   ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐
+   │ Auth   │ │ Cards  │ │ Match  │ │Player  │ │History │
+   │Service │ │Service │ │Service │ │Service │ │Service │
+   │(5001)  │ │(5002)  │ │(5003)  │ │(5004)  │ │(5005)  │
+   └────────┘ └────────┘ └────────┘ └────────┘ └────────┘
+      │          │          │         │          │
+      ▼          ▼          ▼         ▼          ▼
+   Auth DB    Cards DB    Redis    Player DB   History DB
+  (postgres) (postgres)           (postgres)  (postgres)
 ```
 
-### The Microservices
+### Microservices Description
 
-1. **Auth Service**: Handles registration, login, and JWT token validation.
-2. **Player Service**: Manages profiles, stats, and rankings.
-3. **Card Service**: Info about all 40 Spanish cards.
-4. **Match Service**: Matchmaking, live matches, game logic.
-5. **History Service**: Keeps track of finished matches.
+- **API Gateway**: Central entry point for all client requests. Routes requests to appropriate services and validates JWT tokens.
+- **Auth Service**: Handles user registration and login using bcrypt for password hashing and JWT for authentication.
+- **Cards Service**: Manages the Spanish card deck (40 cards) with images and game rules.
+- **Match Service**: Implements the core La Escoba game logic, manages active matches in Redis.
+- **Player Service**: Stores player profiles and statistics.
+- **History Service**: Persists completed match records for historical analysis.
 
----
+## Get Started
 
-## Technologies
+### Prerequisites
 
-- **Backend**: Python with Flask
-- **API Gateway**: Kong or Nginx
-- **Bases de datos**: 
-  - PostgreSQL (Auth, Players, Cards, History)
-  - Redis (Match state)
-- **Containerización**: Docker + Docker Compose
-- **Testing**: Postman (unit tests), Locust (performance)
-- **Seguridad**: JWT Auth
+- Docker and Docker Compose (version 3.8+)
+- Git
+- Python 3.9+ (for local development)
+- PostgreSQL client (optional, for direct DB access)
 
----
+### Installation & Running
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ASEProject2
+   ```
+
+2. **Build and start all services**
+   ```bash
+   docker compose up --build
+   ```
+   
+   This will:
+   - Generate self-signed SSL certificates for each service
+   - Build all microservice Docker images
+   - Start all containers (6 services + 5 databases)
+   - Initialize databases with schema
+   - Output health status for all services
+
+3. **Verify the system is running**
+   ```bash
+   curl https://localhost:5000/health \
+     --cacert ./certs/ca-cert.pem \
+     --insecure
+   ```
+
+   Or visit in browser (accepting self-signed certificate warning):
+   ```
+   https://localhost:5000/health
+   ```
+
+### Basic API Usage
+
+#### 1. Register a new player
+```bash
+curl -X POST https://localhost:5000/auth/register \
+  --insecure \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "player1",
+    "password": "securepassword123"
+  }'
+```
+
+Response:
+```json
+{
+  "message": "User registered successfully",
+  "username": "player1"
+}
+```
+
+#### 2. Login to get JWT token
+```bash
+curl -X POST https://localhost:5000/auth/login \
+  --insecure \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "player1",
+    "password": "securepassword123"
+  }'
+```
+
+Response:
+```json
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "username": "player1"
+}
+```
+
+#### 3. View all cards
+```bash
+curl https://localhost:5000/cards/cards \
+  --insecure \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+#### 4. Create a match
+```bash
+curl -X POST https://localhost:5000/match/match \
+  --insecure \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "player1": "player1",
+    "player2": "player2"
+  }'
+```
+
+Response:
+```json
+{
+  "match_id": "550e8400-e29b-41d4-a716-446655440000",
+  "players": ["player1", "player2"],
+  "status": "active",
+  "message": "Match created successfully"
+}
+```
+
+#### 5. Get match state
+```bash
+curl https://localhost:5000/match/match/550e8400-e29b-41d4-a716-446655440000 \
+  --insecure \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -d "?player=player1"
+```
+
+#### 6. Play a card
+```bash
+curl -X POST https://localhost:5000/match/match/550e8400-e29b-41d4-a716-446655440000/play \
+  --insecure \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "player": "player1",
+    "card_id": 5
+  }'
+```
+
+#### 7. View player profile
+```bash
+curl https://localhost:5000/players/player1 \
+  --insecure \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+#### 8. View match history
+```bash
+curl https://localhost:5000/history/player1 \
+  --insecure \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### Running Tests
+
+#### Postman Unit Tests (requires Postman collection files)
+```bash
+# Unit tests for individual services
+postman_cli collections run ./docs/postman/Auth-Service-Tests.json
+postman_cli collections run ./docs/postman/Match-Service-Tests.json
+postman_cli collections run ./docs/postman/History-Service-Tests.json
+```
+
+#### Integration Tests (with full system running)
+```bash
+# Same Postman collections can be run against the API Gateway
+postman_cli collections run ./docs/postman/Integration-Tests.json
+```
+
+#### Performance Tests
+```bash
+# Run Locust performance tests against the API Gateway
+locust -f ./docs/locust/locustfile.py --host https://localhost:5000 \
+  --users 100 --spawn-rate 10 --run-time 5m --insecure
+```
+
+### Stopping the System
+
+```bash
+# Stop all containers
+docker compose down
+
+# Stop containers and remove volumes (careful - deletes data)
+docker compose down -v
+```
+
+## Project Structure
+
+```ascii
+ASEProject2/
+├── services/
+│   ├── api-gateway/           # Main entry point
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
+│   ├── auth-service/          # User authentication
+│   ├── cards-service/         # Card management
+│   ├── match-service/         # Game logic
+│   ├── player-service/        # Player profiles
+│   └── history-service/       # Match records
+├── databases/
+│   └── init-scripts/          # SQL initialization scripts
+├── certs/                     # SSL certificates (auto-generated)
+├── docs/
+│   ├── architecture/          # Architecture diagrams
+│   ├── openapi/              # OpenAPI specification
+│   ├── postman/              # Postman test collections
+│   └── locust/               # Performance test files
+├── docker-compose.yml         # Service orchestration
+└── README.md                  # This file
+```
+
+## Security Features
+
+- **HTTPS/TLS**: All inter-service communication uses self-signed certificates
+- **JWT Authentication**: Token-based authentication with HS256 algorithm
+- **Password Security**: Bcrypt hashing (10 rounds) for secure password storage
+- **Non-root Containers**: All services run as non-root user 'appuser'
+- **Input Validation**: All endpoints validate and sanitize user inputs
+- **Database Isolation**: Each service has its own database instance
+
+## Development
+
+### Adding a new endpoint to a service
+
+1. Update the service's `app.py` with new route handler
+2. Forward the route in API Gateway's `app.py`
+3. Add tests to the Postman collection
+4. Rebuild: `docker compose up --build`
+
+### Viewing logs
+
+```bash
+# All services
+docker compose logs -f
+
+# Specific service
+docker compose logs -f auth-service
+
+# Last 100 lines
+docker compose logs --tail 100 match-service
+```
+
+### Debugging
+
+Enable debug mode by modifying the service's app.py:
+```python
+app.run(host='0.0.0.0', port=5001, debug=True)  # NOT for production
+```
 
 ## Documentation
 
-All our project documentation is in the `/docs` folder:
-- `/architecture`: 
-       - **arquitectura.md**: Detailed architecture description.
-       - **structurizr.dsl**: Architecture diagram in Structurizr format.
-       - **SystemContextView.dsl**: High-level system context diagram screenshot.
-       - **ContainerView.dsl**: Lower-level container diagram showing each part of the project.
+- **Architecture**: See `docs/architecture/Architecture.md`
+- **OpenAPI Spec**: See `docs/openapi/openapi.yaml` for complete API specification
+- **Postman Collections**: See `docs/postman/` for test suites
+- **Performance Reports**: See `docs/locust/` for load test results
 
-- API specification : `/openapi/openapi.yaml`
+## Known Limitations
 
-- API usage examples : `/guides/api-usage-examples.md`
+- Frontend is optional and provided as reference only
+- SSL certificates are self-signed (warning in browsers/clients is normal)
+- Redis persistence is enabled but not replicated (single instance)
+- No automatic service discovery (services must be running for health checks to pass)
 
-- Testing guide : `/guides/testing-guide.md`
+## Troubleshooting
 
-## Testing
+**Services won't start**
+- Check logs: `docker compose logs`
+- Ensure ports 5000-5005 are not in use
+- Clear volumes: `docker compose down -v` then rebuild
 
-Import JSON files from `tests/postman` and run Locust test: 
-```bash
-locust -f tests/locust/locustfile.py
-```
-Then access UI at: `http://localhost:8089`
+**Certificate errors**
+- Certificates are auto-generated in `certs/` folder on first run
+- Use `--insecure` flag with curl or accept warnings in browser
+- For production: replace with proper signed certificates
 
-### Checking out the Structurizr Diagram
+**Database connection errors**
+- Check database is healthy: `docker compose ps`
+- Verify environment variables in docker-compose.yml
+- Wait for healthchecks to pass before making requests
 
-If you want to see the architecture diagram in more detail, we used [https://structurizr.com](https://structurizr.com) to develop this architecture.
-
-1. Go to https://structurizr.com/dsl .
-2. Copy the content from `docs/structurizr/workspace.dsl` .
-3. Paste it into the online editor.
-4. Check out the context and container diagrams
-
----
-
-## How it works
-
-### Spanish Deck (40 cards)
-
-4 suits: **Coins (Oros), Cups (Copas), Swords (Espadas), Clubs (Bastos)**  
-Values: 1-7, Jack (Sota) (10), Knight (Caballo) (11), King (Rey) (12)
-
-### Card Values for Gameplay
-
-- Cards 1-7: worth their number
-- Jack (Sota): worth 8
-- Knight (Caballo): worth 9
-- King (Rey): worth 10
-
-### Card capture mechanic
-The primary goal of the game is to capture cards from the table to score points.
-
-- **Turn Action**: During a turn, a player plays one card from their hand.
-
-- **The Capture Rule (Sum to 15)**: The played card must, when added to one or more cards already face-up on the table, result in a sum of exactly 15. If a player can achieve a sum of 15, they take both their played card and the captured card(s) and set them aside to calculate the score later.
-
-- **No Capture**: If the played card cannot be combined with any card or combination of cards on the table to sum to 15, the card remains on the table for the next player to potentially capture.
-
-- **Escoba**: An Escoba is scored if the player captures all cards currently on the table in a single turn.
-
-### Scoring
-
-- **Escoba**: - **Escoba**: +1 point (capturing all cards on the table)
-- **7 of Coins**: +1 point
-- **7 of Cups**: +1 point
-- **Most cards captured**: +1 point
-- **Most coins captured**: +1 point
-
-First player to reach 15 points wins (or whatever custom target we set).
+**JWT Token expired**
+- Get new token: Use login endpoint to refresh
+- Check system clock is correct
