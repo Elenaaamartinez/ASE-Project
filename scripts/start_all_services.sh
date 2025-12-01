@@ -2,7 +2,6 @@
 
 echo "Starting La Escoba Microservices..."
 
-# Corretto: app.py invece di app_replit.py
 python services/auth-service/app.py &
 AUTH_PID=$!
 echo "Auth Service started (PID: $AUTH_PID) on port 5001"
@@ -31,10 +30,5 @@ echo "API Gateway started (PID: $GATEWAY_PID) on port 5000"
 
 sleep 1
 
-echo ""
-echo "All microservices are starting..."
-echo "Frontend will be available on port 5000"
-echo ""
-echo "Press Ctrl+C to stop all services"
-
+echo "Frontend available on port 5000 (via Gateway) or 8080 (Direct)"
 wait
