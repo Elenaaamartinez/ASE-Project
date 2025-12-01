@@ -230,18 +230,75 @@ ASEProject2/
 │   │   ├── requirements.txt
 │   │   └── Dockerfile
 │   ├── auth-service/          # User authentication
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
 │   ├── cards-service/         # Card management
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
 │   ├── match-service/         # Game logic
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
 │   ├── player-service/        # Player profiles
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
 │   └── history-service/       # Match records
+│   │   ├── app.py
+│   │   ├── requirements.txt
+│   │   └── Dockerfile
 ├── databases/
-│   └── init-scripts/          # SQL initialization scripts
-├── certs/                     # SSL certificates (auto-generated)
+│   ├── init-scripts/
+│   │   ├── auth-init.sql        # Auth database schema
+│   │   ├── cards-init.sql       # Cards database schema
+│   │   ├── player-init.sql      # Player database schema
+│   │   └── history-init.sql     # History database schema
+│   └── Dockerfile               # PostgreSQL base image
+├── certs/                       # SSL certificates (auto-generated)
+│   ├── ca-cert.pem
+│   ├── ca-key.pem
+│   └── {service}-{cert,key}.pem
 ├── docs/
-│   ├── architecture/          # Architecture diagrams
-│   ├── openapi/              # OpenAPI specification
-│   ├── postman/              # Postman test collections
-│   └── locust/               # Performance test files
+│   ├── architecture/
+│   │   ├── Architecture.md      # Detailed architecture design
+│   │   ├── ContainerView.png    # Container diagram
+│   │   └── SystemContextView.png
+│   ├── openapi/
+│   │   └── openapi.yaml         # OpenAPI 3.0 specification
+│   ├── postman/
+│   │   ├── Auth-Service-Tests.json
+│   │   ├── Match-Service-Tests.json
+│   │   ├── History-Service-Tests.json
+│   │   └── env-dev.json         # Postman environment
+│   └── locust/
+│       └── locustfile.py        # Performance test scenarios
+├── frotend/
+|   ├── css
+│   │   └── style.css
+|   ├── js
+│   │   ├── api.js
+│   │   ├── auth.js
+│   │   ├── database-viewer.js
+│   │   ├── game.js
+│   │   └── utils.js
+|   ├── public
+│   │   └── images
+|   ├── admin.html
+|   ├── Dockerfile
+|   ├── index.html
+|   ├── package.json
+|   ├── requirements.txt
+│   └── server.py
+├── script/
+|   ├── clean-db.sh
+|   ├── health-check.sh
+│   └── postman/
+├── test/
+|   ├── integration/
+|   ├── locust/
+│   └── postman/
 ├── docker-compose.yml         # Service orchestration
 └── README.md                  # This file
 ```
