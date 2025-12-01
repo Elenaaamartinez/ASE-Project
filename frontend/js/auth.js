@@ -14,14 +14,14 @@ class AuthManager {
 
     showLogin() {
         this.showModal(`
-            <h3>Accedi</h3>
+            <h3>Login</h3>
             <form id="loginForm">
                 <input type="text" id="loginUsername" placeholder="Username" required>
                 <input type="password" id="loginPassword" placeholder="Password" required>
-                <button type="submit">Accedi</button>
+                <button type="submit">Login</button>
             </form>
             <p style="text-align: center; margin-top: 15px;">
-                Non hai un account? <a href="#" onclick="authManager.showRegister()">Registrati</a>
+                Don't have an account? <a href="#" onclick="authManager.showRegister()">Register</a>
             </p>
         `);
         
@@ -36,15 +36,15 @@ class AuthManager {
 
     showRegister() {
         this.showModal(`
-            <h3>Registrati</h3>
+            <h3>Register</h3>
             <form id="registerForm">
                 <input type="text" id="regUsername" placeholder="Username" required>
                 <input type="password" id="regPassword" placeholder="Password" required>
-                <input type="email" id="regEmail" placeholder="Email (opzionale)">
-                <button type="submit">Registrati</button>
+                <input type="email" id="regEmail" placeholder="Email (optional)">
+                <button type="submit">Register</button>
             </form>
             <p style="text-align: center; margin-top: 15px;">
-                Hai già un account? <a href="#" onclick="authManager.showLogin()">Accedi</a>
+                Already have an account? <a href="#" onclick="authManager.showLogin()">Login</a>
             </p>
         `);
         
@@ -65,12 +65,12 @@ class AuthManager {
                 this.currentUser = username;
                 this.updateUI();
                 this.hideModal();
-                Utils.showNotification(`Benvenuto ${username}!`, 'success');
+                Utils.showNotification(`Welcome ${username}!`, 'success');
             } else {
-                Utils.showNotification('Login fallito: Credenziali errate', 'error');
+                Utils.showNotification('Login failed: Incorrect credentials', 'error');
             }
         } catch (error) {
-            Utils.showNotification('Login fallito: ' + (error.message || 'Errore di connessione'), 'error');
+            Utils.showNotification('Login failed: ' + (error.message || 'Connection error'), 'error');
         }
     }
 
@@ -78,47 +78,47 @@ class AuthManager {
         try {
             const result = await EscobaAPI.register(username, password, email);
             if (result.message && result.message.includes('successfully')) {
-                Utils.showNotification('Registrazione completata! Ora puoi accedere.', 'success');
+                Utils.showNotification('Registration successful! Please login.', 'success');
                 this.showLogin();
             } else {
-                Utils.showNotification('Registrazione fallita: ' + (result.error || 'Errore sconosciuto'), 'error');
+                Utils.showNotification('Registration failed: ' + (result.error || 'Unknown error'), 'error');
             }
         } catch (error) {
-            Utils.showNotification('Registrazione fallita: ' + (error.message || 'Errore di connessione'), 'error');
+            Utils.showNotification('Registration failed: ' + (error.message || 'Connection error'), 'error');
         }
     }
 
     logout() {
         this.currentUser = null;
         this.updateUI();
-        Utils.showNotification('Arrivederci!', 'info');
+        Utils.showNotification('Goodbye!', 'info');
     }
 
     updateUI() {
         const isLoggedIn = this.currentUser !== null;
         
-        // Mostra/nascondi bottoni
+        // Show/hide buttons
         document.getElementById('loginBtn').style.display = isLoggedIn ? 'none' : 'block';
         document.getElementById('registerBtn').style.display = isLoggedIn ? 'none' : 'block';
         document.getElementById('playBtn').style.display = isLoggedIn ? 'block' : 'none';
         document.getElementById('profileBtn').style.display = isLoggedIn ? 'block' : 'none';
         document.getElementById('logoutBtn').style.display = isLoggedIn ? 'block' : 'none';
 
-        // Aggiorna contenuto principale
+        // Update main content
         const welcomeSection = document.getElementById('welcome');
         const gameSection = document.getElementById('gameSection');
         
         if (isLoggedIn) {
             welcomeSection.innerHTML = `
-                <h2>Benvenuto, ${this.currentUser}!</h2>
-                <p>Clicca "Gioca" per iniziare una partita o "Profilo" per vedere le tue statistiche.</p>
+                <h2>Welcome, ${this.currentUser}!</h2>
+                <p>Click "Play" to start a match or "Profile" to view your stats.</p>
             `;
             gameSection.style.display = 'none';
             welcomeSection.style.display = 'block';
         } else {
             welcomeSection.innerHTML = `
-                <h2>Benvenuto a La Escoba!</h2>
-                <p>Il classico gioco di carte spagnolo</p>
+                <h2>Welcome to La Escoba!</h2>
+                <p>The classic Spanish card game</p>
                 <div class="card-preview">
                     <div class="card">
                         <div class="card-value">7</div>
@@ -137,7 +137,7 @@ class AuthManager {
                     </div>
                 </div>
                 <p style="text-align: center; margin-top: 20px;">
-                    <strong>Accedi o registrati per iniziare a giocare!</strong>
+                    <strong>Login or register to start playing!</strong>
                 </p>
             `;
             gameSection.style.display = 'none';
@@ -149,16 +149,16 @@ class AuthManager {
         document.getElementById('welcome').style.display = 'none';
         document.getElementById('gameSection').style.display = 'block';
         
-        // Mostra interfaccia per creare/joinare partita
+        // Show interface to create/join a match
         document.getElementById('gameSection').innerHTML = `
             <div class="game-header">
-                <h3>🎮 Gioca</h3>
-                <button onclick="authManager.showMainScreen()">← Torna Indietro</button>
+                <h3>🎮 Play</h3>
+                <button onclick="authManager.showMainScreen()">← Go Back</button>
             </div>
             <div class="game-options">
-                <button onclick="gameManager.showCreateGame()">Crea Nuova Partita</button>
-                <button onclick="gameManager.showJoinGame()">Unisciti a Partita</button>
-                <button onclick="gameManager.showRandomMatch()">Partita Casuale</button>
+                <button onclick="gameManager.showCreateGame()">Create New Match</button>
+                <button onclick="gameManager.showJoinGame()">Join Match</button>
+                <button onclick="gameManager.showRandomMatch()">Random Match</button>
             </div>
             <div id="gameInterface" style="display:none"></div>
         `;
@@ -180,32 +180,32 @@ class AuthManager {
             
             document.getElementById('gameSection').innerHTML = `
                 <div class="game-header">
-                    <h3>👤 Profilo di ${this.currentUser}</h3>
-                    <button onclick="authManager.showMainScreen()">← Torna Indietro</button>
+                    <h3>👤 Profile of ${this.currentUser}</h3>
+                    <button onclick="authManager.showMainScreen()">← Go Back</button>
                 </div>
                 
                 <div class="profile-info">
-                    <h4>Statistiche</h4>
-                    <p><strong>Punteggio Totale:</strong> ${profile.total_score}</p>
-                    <p><strong>Livello:</strong> ${profile.level}</p>
-                    <p><strong>Partite Giocate:</strong> ${profile.matches_played}</p>
-                    <p><strong>Vittorie:</strong> ${profile.matches_won}</p>
-                    <p><strong>Sconfitte:</strong> ${profile.matches_lost}</p>
-                    <p><strong>Percentuale Vittorie:</strong> ${(profile.win_rate * 100).toFixed(1)}%</p>
+                    <h4>Statistics</h4>
+                    <p><strong>Total Score:</strong> ${profile.total_score}</p>
+                    <p><strong>Level:</strong> ${profile.level}</p>
+                    <p><strong>Matches Played:</strong> ${profile.matches_played}</p>
+                    <p><strong>Wins:</strong> ${profile.matches_won}</p>
+                    <p><strong>Losses:</strong> ${profile.matches_lost}</p>
+                    <p><strong>Win Rate:</strong> ${(profile.win_rate * 100).toFixed(1)}%</p>
                 </div>
                 
                 <div class="match-history">
-                    <h4>Storico Partite (${history.match_count})</h4>
+                    <h4>Match History (${history.match_count})</h4>
                     ${history.matches.length > 0 ? 
                         history.matches.map(match => `
                             <div class="match-item">
                                 <p><strong>VS ${match.player1 === this.currentUser ? match.player2 : match.player1}</strong></p>
-                                <p>Risultato: <strong>${match.your_result === 'win' ? '✅ Vittoria' : match.your_result === 'loss' ? '❌ Sconfitta' : '⚪ Pareggio'}</strong></p>
-                                <p>Punteggio: ${JSON.stringify(match.scores)}</p>
+                                <p>Result: <strong>${match.your_result === 'win' ? '✅ Win' : match.your_result === 'loss' ? '❌ Loss' : '⚪ Draw'}</strong></p>
+                                <p>Score: ${JSON.stringify(match.scores)}</p>
                                 <p><small>${new Date(match.end_time).toLocaleString()}</small></p>
                             </div>
                         `).join('') :
-                        '<p>Nessuna partita giocata ancora.</p>'
+                        '<p>No matches played yet.</p>'
                     }
                 </div>
             `;
@@ -213,10 +213,10 @@ class AuthManager {
             console.error('Error loading profile:', error);
             document.getElementById('gameSection').innerHTML = `
                 <div class="game-header">
-                    <h3>👤 Profilo</h3>
-                    <button onclick="authManager.showMainScreen()">← Torna Indietro</button>
+                    <h3>👤 Profile</h3>
+                    <button onclick="authManager.showMainScreen()">← Go Back</button>
                 </div>
-                <p>Errore nel caricamento del profilo.</p>
+                <p>Error loading profile.</p>
             `;
         }
     }
@@ -228,7 +228,7 @@ class AuthManager {
     }
 
     showModal(content) {
-        // Rimuovi modali esistenti
+        // Remove existing modals
         const existingModal = document.querySelector('.modal');
         if (existingModal) {
             existingModal.remove();
@@ -244,7 +244,7 @@ class AuthManager {
         `;
         document.body.appendChild(modal);
 
-        // Chiudi modal cliccando fuori
+        // Close modal by clicking outside
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 this.hideModal();

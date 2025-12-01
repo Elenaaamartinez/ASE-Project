@@ -1,7 +1,7 @@
 // Import necessary modules or declare variables before using them
-const authManager = require("./auth.js")
-const Utils = require("./utils.js")
-const EscobaAPI = require("./api.js")
+const authManager = require("auth.js")
+const Utils = require("utils.js")
+const EscobaAPI = require("api.js")
 
 class GameManager {
   constructor() {

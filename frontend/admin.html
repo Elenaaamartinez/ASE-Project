@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -179,56 +179,56 @@
     <div class="container">
         <header>
             <h1>🔍 Database Admin Viewer</h1>
-            <div class="subtitle">La Escoba - Sistema di Monitoraggio Database</div>
+            <div class="subtitle">La Escoba - Database Monitoring System</div>
         </header>
         
         <div class="controls">
-            <button class="btn btn-refresh" onclick="loadAllData()">🔄 Aggiorna Tutto</button>
-            <button class="btn" onclick="loadPlayers()">👥 Carica Players</button>
-            <button class="btn" onclick="loadMatches()">🎮 Carica Partite</button>
-            <button class="btn" onclick="loadCards()">🃏 Carica Carte</button>
-            <button class="btn" onclick="loadStats()">📊 Carica Statistiche</button>
-            <button class="btn-clear" onclick="clearAll()">🗑️ Pulisci Tutto</button>
+            <button class="btn btn-refresh" onclick="loadAllData()">🔄 Refresh All</button>
+            <button class="btn" onclick="loadPlayers()">👥 Load Players</button>
+            <button class="btn" onclick="loadMatches()">🎮 Load Matches</button>
+            <button class="btn" onclick="loadCards()">🃏 Load Cards</button>
+            <button class="btn" onclick="loadStats()">📊 Load Statistics</button>
+            <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
         </div>
         
         <div class="database-section">
             <div class="section-header">
                 <h2 class="section-title">👥 Players Database</h2>
-                <button class="btn" onclick="loadPlayers()">Aggiorna</button>
+                <button class="btn" onclick="loadPlayers()">Refresh</button>
             </div>
             <div id="playersData" class="data-container loading">
-                Clicca "Carica Players" per visualizzare i dati...
+                Click "Load Players" to view the data...
             </div>
         </div>
         
         <div class="database-section">
             <div class="section-header">
                 <h2 class="section-title">🎮 Matches & History</h2>
-                <button class="btn" onclick="loadMatches()">Aggiorna</button>
+                <button class="btn" onclick="loadMatches()">Refresh</button>
             </div>
             <div id="matchesData" class="data-container loading">
-                Clicca "Carica Partite" per visualizzare i dati...
+                Click "Load Matches" to view the data...
             </div>
         </div>
         
         <div class="database-section">
             <div class="section-header">
                 <h2 class="section-title">🃏 Cards Database</h2>
-                <button class="btn" onclick="loadCards()">Aggiorna</button>
+                <button class="btn" onclick="loadCards()">Refresh</button>
             </div>
             <div id="cardsData" class="data-container loading">
-                Clicca "Carica Carte" per visualizzare i dati...
+                Click "Load Cards" to view the data...
             </div>
         </div>
         
         <div class="database-section">
             <div class="section-header">
                 <h2 class="section-title">📊 System Statistics</h2>
-                <button class="btn" onclick="loadStats()">Aggiorna</button>
+                <button class="btn" onclick="loadStats()">Refresh</button>
             </div>
             <div id="statsData" class="data-container">
                 <div class="stats" id="statsContainer">
-                    Le statistiche verranno caricate qui...
+                    Statistics will be loaded here...
                 </div>
             </div>
         </div>
@@ -237,7 +237,6 @@
     <script>
         const API_BASE = 'http://localhost:5000';
         
-        // Format JSON for display
         function formatJSON(data) {
             if (typeof data === 'string') {
                 try {
@@ -249,21 +248,17 @@
             return JSON.stringify(data, null, 2);
         }
         
-        // Show loading state
         function showLoading(elementId) {
-            document.getElementById(elementId).innerHTML = '<div class="loading">⏳ Caricamento in corso...</div>';
+            document.getElementById(elementId).innerHTML = '<div class="loading">⏳ Loading...</div>';
         }
         
-        // Show error
         function showError(elementId, error) {
-            document.getElementById(elementId).innerHTML = `<div class="error">❌ Errore: ${error.message}</div>`;
+            document.getElementById(elementId).innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
         }
         
-        // Load players data
         async function loadPlayers() {
             showLoading('playersData');
             try {
-                // Try to load multiple players
                 const testPlayers = ['mario', 'luigi', 'testplayer'];
                 let playersData = {};
                 
@@ -274,7 +269,7 @@
                             playersData[player] = await response.json();
                         }
                     } catch (e) {
-                        playersData[player] = { error: 'Player non trovato' };
+                        playersData[player] = { error: 'Player not found' };
                     }
                 }
                 
@@ -285,7 +280,6 @@
             }
         }
         
-        // Load matches data
         async function loadMatches() {
             showLoading('matchesData');
             try {
@@ -299,7 +293,7 @@
                             matchesData[player] = await response.json();
                         }
                     } catch (e) {
-                        matchesData[player] = { error: 'Nessuna storia trovata' };
+                        matchesData[player] = { error: 'No history found' };
                     }
                 }
                 
@@ -310,14 +304,12 @@
             }
         }
         
-        // Load cards data
         async function loadCards() {
             showLoading('cardsData');
             try {
                 const response = await fetch(`${API_BASE}/cards/cards`);
                 const data = await response.json();
                 
-                // Show summary and full data
                 const summary = {
                     total_cards: data.cards ? data.cards.length : 0,
                     suits: {},
@@ -345,10 +337,9 @@
             }
         }
         
-        // Load system statistics
         async function loadStats() {
             const statsContainer = document.getElementById('statsContainer');
-            statsContainer.innerHTML = '<div class="loading">Calcolo statistiche...</div>';
+            statsContainer.innerHTML = '<div class="loading">Calculating statistics...</div>';
             
             try {
                 let stats = {
@@ -358,7 +349,6 @@
                     services: {}
                 };
                 
-                // Test each service
                 const services = [
                     { name: 'API Gateway', endpoint: '/health' },
                     { name: 'Auth Service', endpoint: '/auth/health' },
@@ -377,58 +367,53 @@
                     }
                 }
                 
-                // Get player count from sample
                 try {
                     const response = await fetch(`${API_BASE}/players/mario`);
                     if (response.ok) {
-                        stats.players = 1; // At least one player exists
+                        stats.players = 1;
                     }
                 } catch (e) {}
                 
-                // Get matches count
                 try {
                     const response = await fetch(`${API_BASE}/history/mario`);
                     const data = await response.json();
                     stats.matches = data.match_count || 0;
                 } catch (e) {}
                 
-                // Get cards count
                 try {
                     const response = await fetch(`${API_BASE}/cards/cards`);
                     const data = await response.json();
                     stats.cards = data.count || 0;
                 } catch (e) {}
                 
-                // Display stats as cards
                 statsContainer.innerHTML = `
                     <div class="stat-card">
                         <div class="stat-value">${stats.players}</div>
-                        <div class="stat-label">Giocatori Registrati</div>
+                        <div class="stat-label">Registered Players</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${stats.matches}</div>
-                        <div class="stat-label">Partite Giocate</div>
+                        <div class="stat-label">Matches Played</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${stats.cards}</div>
-                        <div class="stat-label">Carte nel Mazzo</div>
+                        <div class="stat-label">Cards in Deck</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value">${Object.values(stats.services).filter(s => s === '✅ Online').length}/6</div>
-                        <div class="stat-label">Servizi Online</div>
+                        <div class="stat-label">Online Services</div>
                     </div>
                     <div class="stat-card" style="grid-column: 1 / -1;">
-                        <div class="stat-label">Stato Servizi:</div>
+                        <div class="stat-label">Service Status:</div>
                         <pre style="margin-top: 10px; font-size: 0.8em;">${formatJSON(stats.services)}</pre>
                     </div>
                 `;
                 
             } catch (error) {
-                statsContainer.innerHTML = `<div class="error">Errore nel caricamento statistiche: ${error.message}</div>`;
+                statsContainer.innerHTML = `<div class="error">Error loading statistics: ${error.message}</div>`;
             }
         }
         
-        // Load all data
         async function loadAllData() {
             await loadPlayers();
             await loadMatches();
@@ -436,15 +421,13 @@
             await loadStats();
         }
         
-        // Clear all displays
         function clearAll() {
-            document.getElementById('playersData').innerHTML = '<div class="loading">Clicca "Carica Players" per visualizzare i dati...</div>';
-            document.getElementById('matchesData').innerHTML = '<div class="loading">Clicca "Carica Partite" per visualizzare i dati...</div>';
-            document.getElementById('cardsData').innerHTML = '<div class="loading">Clicca "Carica Carte" per visualizzare i dati...</div>';
-            document.getElementById('statsContainer').innerHTML = 'Le statistiche verranno caricate qui...';
+            document.getElementById('playersData').innerHTML = '<div class="loading">Click "Load Players" to view the data...</div>';
+            document.getElementById('matchesData').innerHTML = '<div class="loading">Click "Load Matches" to view the data...</div>';
+            document.getElementById('cardsData').innerHTML = '<div class="loading">Click "Load Cards" to view the data...</div>';
+            document.getElementById('statsContainer').innerHTML = 'Statistics will be loaded here...';
         }
         
-        // Load all data on page load
         window.onload = loadAllData;
     </script>
 </body>

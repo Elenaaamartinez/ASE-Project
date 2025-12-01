@@ -7,7 +7,7 @@ class Utils {
 
     const suits = ["oro", "copas", "espadas", "bastos"]
     const suitNames = ["Golds", "Cups", "Swords", "Clubs"]
-    const suitSymbols = ["./images/oros.png","./images/copas.png","./images/espadas.png","./images/bastos.png"]
+    const suitSymbols = ["./public/images/oros.png","./public/images/copas.png","./public/images/espadas.png","./public/images/bastos.png"]
 
     // Calculate suit and value
     const suitIndex = Math.floor((cardId - 1) / 10)
